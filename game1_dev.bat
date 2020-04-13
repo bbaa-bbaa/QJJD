@@ -998,23 +998,32 @@ if "!敌方选择完毕!"=="t" (
   Set 离得最近的XY积=100000
   Set 离得最近的单位Id=
   Set 是否替换=
-  Set 我方单位_ 1>var/我方单位_.env
-  for /f "Tokens=1-2 delims==" %%i in (var/我方单位_.env) do (
-    Set /a "TempX=!NamePlayer_%%j_X!-!敌方单位X!"
-    Set /a "TempY=!NamePlayer_%%j_Y!-!敌方单位Y!"
-    Set /a "TempXY=!TempX!*!TempX!+!TempY!*!TempY!"
-    if !TempXY! lss !离得最近的XY积! (
-      Set 离得最近的XY积=!TempXY!
-      Set 离得最近的单位Id=%%j
-      Set 最近单位X=!NamePlayer_%%j_X!
-      Set 最近单位Y=!NamePlayer_%%j_Y!
-    ) else if !TempXY!==!离得最近的XY积! (
-      Set /a "是否替换=!random! %% 2"
-      if !是否替换!==1 (
+  Set /a "溜走血量=!NamePlayer_%敌方EnityId%_总血量!/3+1"
+  Set "追踪阵营=我方"
+  if !NamePlayer_%敌方EnityId%_血量! leq !溜走血量! (
+    if !敌方单位数量! geq 2 (
+      Set "追踪阵营=敌方"
+    )
+  )
+  Set !追踪阵营!单位_ 1>var/!追踪阵营!单位_.env
+  for /f "Tokens=1-2 delims==" %%i in (var/!追踪阵营!单位_.env) do (
+    if not %%j==!敌方EnityId! (
+      Set /a "TempX=!NamePlayer_%%j_X!-!敌方单位X!"
+      Set /a "TempY=!NamePlayer_%%j_Y!-!敌方单位Y!"
+      Set /a "TempXY=!TempX!*!TempX!+!TempY!*!TempY!"
+      if !TempXY! lss !离得最近的XY积! (
         Set 离得最近的XY积=!TempXY!
         Set 离得最近的单位Id=%%j
         Set 最近单位X=!NamePlayer_%%j_X!
         Set 最近单位Y=!NamePlayer_%%j_Y!
+      ) else if !TempXY!==!离得最近的XY积! (
+        Set /a "是否替换=!random! %% 2"
+        if !是否替换!==1 (
+          Set 离得最近的XY积=!TempXY!
+          Set 离得最近的单位Id=%%j
+          Set 最近单位X=!NamePlayer_%%j_X!
+          Set 最近单位Y=!NamePlayer_%%j_Y!
+        )
       )
     )
   )
@@ -1083,40 +1092,40 @@ Goto :Eof
 :敌方移动开始_DFS
 Set "MoveX=+0+0-1+1" || REM 上0下1左2右3
 Set "MoveY=-1+1+0+0"
-Set /a XDis=!最近单位X! - !敌方单位X!
-Set /a YDis=!最近单位Y! - !敌方单位Y!
+Set /a XDis=!最近单位X!-!敌方单位X!
+Set /a YDis=!最近单位Y!-!敌方单位Y!
 if !XDis! gtr 0 (
   ::目标在右侧
   if !YDis! gtr 0 (
-    ::目标在上方
+    ::目标在下方
     if !YDis! gtr !XDis! (
-      Set MoveRule=0312 || Rem 上右下左
+      Set MoveRule=1302 || Rem 下右上左
     ) else (
-      Set MoveRule=3021 || Rem 右上左下
+      Set MoveRule=3120 || Rem 右下左上
     )
   ) else (
     ::目标在下方
     if -!YDis! gtr !XDis! (
-      Set MoveRule=1302 || Rem 下右上左
+      Set MoveRule=0312 || Rem 上右下左
     ) else (
-      Set MoveRule=3120 || Rem 右下左上
+      Set MoveRule=3021 || Rem 右上左下
     )
   )
 ) else (
   ::目标在左侧
   if !YDis! gtr 0 (
-    ::目标在上方
-    if !YDis! gtr -!XDis! (
-      Set MoveRule=0213 || Rem 上左下右
-    ) else (
-      Set MoveRule=2031 || Rem 左上右下
-    )
-  ) else (
     ::目标在下方
-    if -!YDis! gtr -!XDis! (
+    if !YDis! gtr -!XDis! (
       Set MoveRule=1203 || Rem 下左上右
     ) else (
       Set MoveRule=2130 || Rem 左下右上
+    )
+  ) else (
+    ::目标在上方
+    if -!YDis! gtr -!XDis! (
+      Set MoveRule=0213 || Rem 上左下右
+    ) else (
+      Set MoveRule=2031 || Rem 左上右下
     )
   )
 )
@@ -1206,6 +1215,10 @@ if !DFS_Step! lss 3 (
 goto :DFS_Main
 :DFS_Back
 REM 回溯状态
+if !DFS_HistoryLength! equ 0 (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
 Set /a DFS_HistoryLength-=1
 set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_X=!DFS_HistoryX:~-2,2!
@@ -1227,11 +1240,28 @@ if !DFS_HistoryLength!==!DFS_MoveStep! (
   Set "回合=敌方移动选定"
   Goto :Main
 )
-Set /a SelectX=!DFS_HistoryX:~0,2!
-Set /a SelectY=!DFS_HistoryY:~0,2!
+Set /a DFS_MoveTempX=!DFS_HistoryX:~0,2!
+Set /a DFS_MoveTempY=!DFS_HistoryY:~0,2!
+if !DFS_MoveTempX! lss !敌方EnityId_移动起始X! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !DFS_MoveTempX! gtr !敌方EnityId_移动结束X! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !DFS_MoveTempY! lss !敌方EnityId_移动起始Y! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !DFS_MoveTempY! gtr !敌方EnityId_移动结束Y! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+Set /a SelectX=!DFS_MoveTempX!
+Set /a SelectY=!DFS_MoveTempY!
 Set "DFS_HistoryX=!DFS_HistoryX:~2!"
 Set "DFS_HistoryY=!DFS_HistoryY:~2!"
-echo !DFS_HistoryX!;!DFS_HistoryY!;!SelectX!;!SelectY!
 Set /a DFS_MoveStep+=1
 Goto :Main
 :敌方移动选定
