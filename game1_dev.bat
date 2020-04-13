@@ -9,7 +9,6 @@ if !SettingDFS_DebugMode!==1 (
 ) else (
   set SettingDFS_Mode=DFS_Main
 )
-Set SettingDFS_Mode
 @Path %~dp0Tools;%Path%
 @Curs /crv 0
 ver|find "10.">nul 2>nul&&(
