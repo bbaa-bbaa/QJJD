@@ -305,6 +305,10 @@ if "%block%"=="15" (
   set µØÐÎ=µØ»ð
   set ÊôÐÔ=Arknight ÆÆËé´óµÀ
 )
+if "%block%"=="16" (
+  set µØÐÎ=Ñ©µØ
+  set ÊôÐÔ=¹¥»÷¾àÀë-1 »ñµÃ20%¸ÅÂÊÉÁ±Ü
+)
 Set "SPlayer_Id="
 if defined Player_%SelectX%_%SelectY% (
   Set "SPlayer_Id=!Player_%SelectX%_%SelectY%!"
@@ -412,6 +416,8 @@ If !MapList_%SelectX%_%SelectY%!==1 (
   Set /a "EnityId_¹¥»÷¾àÀë=!NamePlayer_%EnityId%_¹¥»÷¾àÀë!+1"
 ) else if !MapList_%SelectX%_%SelectY%!==10 (
   Set /a "EnityId_¹¥»÷¾àÀë=!NamePlayer_%EnityId%_¹¥»÷¾àÀë!+1"
+) else if !MapList_%SelectX%_%SelectY%!==16 (
+  Set /a "EnityId_¹¥»÷¾àÀë=!NamePlayer_%EnityId%_¹¥»÷¾àÀë!-1"
 ) else (
   Set "EnityId_¹¥»÷¾àÀë=!NamePlayer_%EnityId%_¹¥»÷¾àÀë!"
 )
@@ -719,7 +725,12 @@ if !errorlevel!==5 (
           Set /a ±»¹¥»÷·½·ÀÓù+=1
         ) else if "!±»¹¥»÷·½½ÅÏÂ·½¿é!"=="13" (
           Set /a ±»¹¥»÷·½·ÀÓù+=1
-        )
+        ) else if "!±»¹¥»÷·½½ÅÏÂ·½¿é!"=="16" (
+          set ÊÇ·ñÉÁ±Ü=!random!%%4
+          if !ÊÇ·ñÉÁ±Ü!==0 (
+            Goto :Main
+          )
+        ) 
         Set /a "NamePlayer_!EnityId!_ÑªÁ¿-=!EnityId_ÉËº¦!"
         if !±»¹¥»÷·½·ÀÓù! leq !EnityId_ÉËº¦! (
            Set /a "NamePlayer_!EnityId!_ÑªÁ¿+=!±»¹¥»÷·½·ÀÓù!"
@@ -1314,6 +1325,8 @@ If !MapList_%SelectX%_%SelectY%!==1 (
   Set /a "µÐ·½EnityId_¹¥»÷¾àÀë=!NamePlayer_%µÐ·½EnityId%_¹¥»÷¾àÀë!+1"
 ) else if "!MapList_%SelectX%_%SelectY%!"=="10" (
   Set /a "µÐ·½EnityId_¹¥»÷¾àÀë=!NamePlayer_%µÐ·½EnityId%_¹¥»÷¾àÀë!+1"
+) else if !MapList_%SelectX%_%SelectY%!==10 (
+  Set /a "µÐ·½EnityId_¹¥»÷¾àÀë=!NamePlayer_%µÐ·½EnityId%_¹¥»÷¾àÀë!+1"
 ) else (
   Set "µÐ·½EnityId_¹¥»÷¾àÀë=!NamePlayer_%µÐ·½EnityId%_¹¥»÷¾àÀë!"
 )
@@ -1382,6 +1395,16 @@ if "!MapList_%±»¹¥»÷µ¥Î»X%_%±»¹¥»÷µ¥Î»Y%!"=="4" (
   Set /a ±»¹¥»÷·½·ÀÓù=!NamePlayer_%±»¹¥»÷µ¥Î»EnityId%_·ÀÓù!+1
 ) else if "!MapList_%±»¹¥»÷µ¥Î»X%_%±»¹¥»÷µ¥Î»Y%!"=="13" (
   Set /a ±»¹¥»÷·½·ÀÓù=!NamePlayer_%±»¹¥»÷µ¥Î»EnityId%_·ÀÓù!+1
+) else if "!MapList_%±»¹¥»÷µ¥Î»X%_%±»¹¥»÷µ¥Î»Y%!"=="16" (
+  set ÊÇ·ñÉÁ±Ü=!random!%%4
+  if !ÊÇ·ñÉÁ±Ü!==0 (
+    set "SelectType=select"
+    Set "»ØºÏ=µ¥Î»ÒÆ¶¯"
+    Set /a »ØºÏÊý+=1
+    Call :»ØºÏ½áÊø´¦Àí
+    Set "µÐ·½EnityId="
+    Goto :Main
+  )
 ) else (
   Set /a ±»¹¥»÷·½·ÀÓù=!NamePlayer_%±»¹¥»÷µ¥Î»EnityId%_·ÀÓù!
 )
