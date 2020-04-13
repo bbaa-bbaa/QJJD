@@ -121,7 +121,7 @@ Set "image=unload Space"
 Set "image=buffer Space"
 Set "image=stretch Space 64 64"
 Set "SelectType=select"
-Set "无法通行的方块ID=2,3,6,8,9"
+Set "无法通行的方块ID=2,3,6,8,9,17"
 Set SelectX=0
 Set SelectY=0
 Set "敌方寻路指数=15"
@@ -319,6 +319,10 @@ if "%block%"=="15" (
 if "%block%"=="16" (
   set 地形=雪地
   set 属性=攻击距离-1 获得20%概率闪避
+)
+if "%block%"=="6" (
+  set 地形=雪山
+  set 属性=无法通行
 )
 Set "SPlayer_Id="
 if defined Player_%SelectX%_%SelectY% (
