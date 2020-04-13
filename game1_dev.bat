@@ -301,6 +301,10 @@ if "%block%"=="13" (
   set 地形=防御阵地
   set 属性=在此地的单位防御力+1
 )
+if "%block%"=="15" (
+  set 地形=地火
+  set 属性=Arknight 破碎大道
+)
 Set "SPlayer_Id="
 if defined Player_%SelectX%_%SelectY% (
   Set "SPlayer_Id=!Player_%SelectX%_%SelectY%!"
@@ -1465,16 +1469,20 @@ Goto Draw_Menu
 Set Player_ 1>var/Player_.env
 for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
   if !NamePlayer_%%i_血量! gtr 0 (
-    if !NamePlayer_%%i_血量! lss !NamePlayer_%%i_总血量! (
       Call :Get_Ver 方块Id MapList_!NamePlayer_%%i_X!_!NamePlayer_%%i_Y!
       if "!方块Id!"=="11" (
-        Set /a NamePlayer_%%i_血量+=1
+        if !NamePlayer_%%i_血量! lss !NamePlayer_%%i_总血量! (
+         Set /a NamePlayer_%%i_血量+=1
+        )
       )
       if "!方块Id!"=="15" (
         Set /a NamePlayer_%%i_血量-=1
+        Call :玩家死亡判断 %%i
       )
       Call :血量条重算 %%i
-    )
+  ) else (
+    Call :玩家死亡判断 %%i
+    Call :血量条重算 %%i
   )
 )
 Goto :Eof
