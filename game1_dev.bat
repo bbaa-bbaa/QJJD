@@ -303,7 +303,7 @@ if "%block%"=="13" (
 )
 if "%block%"=="15" (
   set 地形=地火
-  set 属性=Arknight 破碎大道
+  set 属性=Arknights 破碎大道
 )
 if "%block%"=="16" (
   set 地形=雪地
