@@ -296,9 +296,10 @@ if defined MoreText (
   Set "MoreText="
 )
 If Not "!回合:~0,2!"=="敌方" (
-  Goto :KeyDown
+  if Not "!回合:~0,3!"=="DFS" (
+   Goto :KeyDown
+  )
 ) else (
-  Goto :!回合!
   if "!回合!"=="敌方移动" (
     Goto :敌方移动
   ) else if "!回合!"=="敌方移动开始" (
@@ -315,6 +316,7 @@ If Not "!回合:~0,2!"=="敌方" (
     Goto :敌方攻击_造成伤害
   )
 )
+Goto :!回合!
 :Main_MoveA
 If "%SelectX%"=="!NamePlayer_%EnityId%_X!" (
   If "%SelectY%"=="!NamePlayer_%EnityId%_Y!" (
@@ -1090,8 +1092,12 @@ for /l %%a in (%敌方EnityId_移动起始Y%,1,%敌方EnityId_移动结束Y%) do (
 ) 2>nul
 Goto :Eof
 :敌方移动开始_DFS
-Set "MoveX=+0+0-1+1" || REM 上0下1左2右3
-Set "MoveY=-1+1+0+0"
+Set DFS 1>var/DFS.env
+for /f "tokens=1 delims==" %%i in (var/DFS.env) do (
+  Set "%%~i="
+)
+Set "DFSMoveX=+0+0-1+1" || REM 上0下1左2右3
+Set "DFSMoveY=-1+1+0+0"
 Set /a XDis=!最近单位X!-!敌方单位X!
 Set /a YDis=!最近单位Y!-!敌方单位Y!
 if !XDis! gtr 0 (
@@ -1099,16 +1105,16 @@ if !XDis! gtr 0 (
   if !YDis! gtr 0 (
     ::目标在下方
     if !YDis! gtr !XDis! (
-      Set MoveRule=1302 || Rem 下右上左
+      Set DFS_MoveRule=1302 || Rem 下右上左
     ) else (
-      Set MoveRule=3120 || Rem 右下左上
+      Set DFS_MoveRule=3120 || Rem 右下左上
     )
   ) else (
     ::目标在下方
     if -!YDis! gtr !XDis! (
-      Set MoveRule=0312 || Rem 上右下左
+      Set DFS_MoveRule=0312 || Rem 上右下左
     ) else (
-      Set MoveRule=3021 || Rem 右上左下
+      Set DFS_MoveRule=3021 || Rem 右上左下
     )
   )
 ) else (
@@ -1116,22 +1122,18 @@ if !XDis! gtr 0 (
   if !YDis! gtr 0 (
     ::目标在下方
     if !YDis! gtr -!XDis! (
-      Set MoveRule=1203 || Rem 下左上右
+      Set DFS_MoveRule=1203 || Rem 下左上右
     ) else (
-      Set MoveRule=2130 || Rem 左下右上
+      Set DFS_MoveRule=2130 || Rem 左下右上
     )
   ) else (
     ::目标在上方
     if -!YDis! gtr -!XDis! (
-      Set MoveRule=0213 || Rem 上左下右
+      Set DFS_MoveRule=0213 || Rem 上左下右
     ) else (
-      Set MoveRule=2031 || Rem 左上右下
+      Set DFS_MoveRule=2031 || Rem 左上右下
     )
   )
-)
-Set DFS 1>var/DFS.env
-for /f "tokens=1 delims==" %%i in (var/DFS.env) do (
-  Set "%%~i="
 )
 Set "DFS_HistoryX=" || Rem 121110+9+8+7
 Set "DFS_HistoryY=" || Rem 121110+9+8+7
@@ -1140,17 +1142,20 @@ Set /a DFS_HistoryLength=0
 Set DFS_X=!SelectX!
 Set DFS_Y=!SelectY!
 Set DFS_Step=0
+Set 回合=DFS_Main
 :DFS_Main
 title 目标!最近单位X!/!最近单位Y!位置!DFS_X!/!DFS_Y!
+set /a SelectX=!DFS_X!
+set /a SelectY=!DFS_Y!
 if !DFS_X!==!最近单位X! (
   if !DFS_Y!==!最近单位Y! (
     Goto :DFS_Found
   )
 )
-Set /a NextRule=!MoveRule:~%DFS_Step%,1!*2
-call Set Next_DFS_X=!DFS_X!%%MoveX:~!NextRule!,2%%
+Set /a NextRule=!DFS_MoveRule:~%DFS_Step%,1!*2
+call Set Next_DFS_X=!DFS_X!%%DFSMoveX:~!NextRule!,2%%
 Set /a Next_DFS_X=!Next_DFS_X!
-call Set Next_DFS_Y=!DFS_Y!%%MoveY:~!NextRule!,2%%
+call Set Next_DFS_Y=!DFS_Y!%%DFSMoveY:~!NextRule!,2%%
 Set /a Next_DFS_Y=!Next_DFS_Y!
 Set "IsWalk=True"
 if !Next_DFS_X! GEQ 0 (
@@ -1189,7 +1194,7 @@ if !Next_DFS_X! GEQ 0 (
 )
 if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
     if "!IsWalk!"=="True" (
-      set DFS_Walked_!Next_DFS_X!_!Next_DFS_Y!=True
+      set "DFS_Walked_!Next_DFS_X!_!Next_DFS_Y!=True"
       if !DFS_X! lss 10 (
         Set "DFS_HistoryX=!DFS_HistoryX!+!DFS_X!"
       ) else (
@@ -1203,8 +1208,9 @@ if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
       Set "DFS_HistoryStep=!DFS_HistoryStep!!DFS_Step!"
       Set DFS_X=!Next_DFS_X!
       Set DFS_Y=!Next_DFS_Y!
+      Set DFS_Step=0
       Set /a DFS_HistoryLength+=1
-      goto :DFS_Main
+      goto :Main
   )
 )
 if !DFS_Step! lss 3 (
@@ -1212,17 +1218,21 @@ if !DFS_Step! lss 3 (
 ) else (
   Goto :DFS_Back
 )
-goto :DFS_Main
+goto :Main
 :DFS_Back
 REM 回溯状态
 if !DFS_HistoryLength! equ 0 (
+  echo !DFS_Step!
+  set DFS_
   Set "回合=敌方移动选定"
+  echo ????
+  pause
   Goto :Main
 )
 Set /a DFS_HistoryLength-=1
-set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_X=!DFS_HistoryX:~-2,2!
 Set /a DFS_Y=!DFS_HistoryY:~-2,2!
+set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_Step=!DFS_HistoryStep:~-1,1!+1
 Set "DFS_HistoryX=!DFS_HistoryX:~0,-2!"
 Set "DFS_HistoryY=!DFS_HistoryY:~0,-2!"
@@ -1230,7 +1240,7 @@ Set "DFS_HistoryStep=!DFS_HistoryStep:~0,-1!"
 if !DFS_Step! geq 4 (
   goto :DFS_Back
 )
-goto :DFS_Main
+goto :Main
 :DFS_Found
 set "回合=敌方移动AI处理"
 Set /a DFS_MoveStep=0
