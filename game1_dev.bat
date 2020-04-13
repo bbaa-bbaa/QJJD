@@ -76,7 +76,7 @@ cls
 Set image=draw cover 0 0
 Set /p map=<level.txt
 Echo                                                请输入想游玩的关卡:
-set /p stagechoose=                                              Stage:
+set /p stagechoose=                                            Stage：
 if "!stagechoose:~0,3!"=="自定:" (
   Set "自定关卡=True"
   Set "map=自定:!stagechoose:~3!"
@@ -363,7 +363,7 @@ for /l %%a in (%EnityId_移动起始Y%,1,%EnityId_移动结束Y%) do (
       if not defined Player_%%b_%%a (
         Set /a "DrawDecideSelectX=%%b*64"
         Set /a "DrawDecideSelectY=%%a*64"
-        Set "image=draw Imgrange !DrawDecideSelectX! !DrawDecideSelectY!"
+        Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY!"
       )
     )
   )
@@ -402,7 +402,7 @@ for /l %%a in (%EnityId_攻击起始Y%,1,%EnityId_攻击结束Y%) do (
         Set /a 可攻击单位数量+=1
         Set /a "DrawAttackSelectX=%%b*64"
         Set /a "DrawAttackSelectY=%%a*64"
-        Set "image=draw Imgrange !DrawAttackSelectX! !DrawAttackSelectY!"
+        Set "image=draw Imgattackrange !DrawAttackSelectX! !DrawAttackSelectY!"
       )
     )
   )
@@ -1074,7 +1074,7 @@ for /l %%a in (%敌方EnityId_移动起始Y%,1,%敌方EnityId_移动结束Y%) do (
       if not defined Player_%%b_%%a (
         Set /a "DrawDecideSelectX=%%b*64"
         Set /a "DrawDecideSelectY=%%a*64"
-        Set "image=draw Imgrange !DrawDecideSelectX! !DrawDecideSelectY!"
+        Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY!"
       )
     )
   )
@@ -1274,7 +1274,7 @@ for /l %%a in (%敌方EnityId_攻击起始Y%,1,%敌方EnityId_攻击结束Y%) do (
         Set "敌方可攻击单位_!可攻击单位数量!=!Player_%%b_%%a!"
         Set /a "DrawAttackSelectX=%%b*64"
         Set /a "DrawAttackSelectY=%%a*64"
-        Set "image=draw Imgrange !DrawAttackSelectX! !DrawAttackSelectY!"
+        Set "image=draw Imgattackrange !DrawAttackSelectX! !DrawAttackSelectY!"
       )
     )
   )
