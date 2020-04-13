@@ -268,10 +268,10 @@ if "%block%"=="5" (
 )
 if "%block%"=="6" (
   set 地形=四维空间
-  set "属性=error on Line 32704:wrong with 'null'"
+  set "属性=error on Line 32768:wrong with 'null'"
 ) else if "%block%"=="" (
   set 地形=四维空间
-  set "属性=error on Line 32704:wrong with 'null'"
+  set "属性=error on Line 32768:wrong with 'null'"
 )
 if "%block%"=="7" (
   set 地形=草地
