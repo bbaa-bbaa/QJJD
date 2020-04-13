@@ -81,12 +81,22 @@ goto Menu_Choose
 cls
 Set image=draw cover 0 0
 Set /p map=<level.txt
+Set CustomIndex=1
+for /f %%i in ('dir /a:d /b 自定关卡') do (
+  echo N!CustomIndex!.%%i
+  Set CustomN!CustomIndex!=%%i
+  Set /a CustomIndex+=1
+)
+
 Echo                                                请输入想游玩的关卡:
 set /p stagechoose=                                            Stage：
-if "!stagechoose:~0,3!"=="自定:" (
+if "!stagechoose:~0,1!"=="N" (
+  if not defined Custom!stagechoose! (
+    goto :Setting
+  )
   Set "自定关卡=True"
-  Set "map=自定:!stagechoose:~3!"
-  Set "自定关卡名=!stagechoose:~3!"
+  Set "map=自定:!Custom%stagechoose%!"
+  Set "自定关卡名=!Custom%stagechoose%!"
 ) else (
   if "%map%" geq "%stagechoose%" (
     if "%stagechoose%" geq "1" (
@@ -208,6 +218,14 @@ if "!回合!"=="单位移动" (
   if /i "!SelectType!"=="decideselect" (
     Call :Show MoveSelect trans
   )
+) else if "!回合!"=="DFS_Main" (
+  if /i "!SelectType!"=="decideselect" (
+    Call :Show MoveSelect trans
+  )
+) else if "!回合!"=="敌方移动AI处理" (
+  if /i "!SelectType!"=="decideselect" (
+    Call :Show MoveSelect trans
+  )
 ) else if "!回合!"=="敌方攻击_选择动画" (
   if /i "!SelectType!"=="decideselect" (
     Call :Show AttackSelect trans
@@ -303,7 +321,7 @@ if defined MoreText (
 )
 If Not "!回合:~0,2!"=="敌方" (
   if Not "!回合:~0,3!"=="DFS" (
-   Goto :KeyDown
+    Goto :KeyDown
   )
 ) else (
   if "!回合!"=="敌方移动" (
@@ -700,15 +718,9 @@ if !errorlevel!==5 (
         )
         Set /a "NamePlayer_!EnityId!_血量-=!EnityId_伤害!"
         if !被攻击方防御! leq !EnityId_伤害! (
-          Set /a "击穿装甲=!random! %% 20 + 1"
-          if !击穿装甲! leq 10 (
-            Set /a "NamePlayer_!EnityId!_血量+=!被攻击方防御!"
-          )
+           Set /a "NamePlayer_!EnityId!_血量+=!被攻击方防御!"
         ) else (
-          Set /a "击穿装甲=!random! %% 20 + 1"
-          if !击穿装甲! leq 10 (
-            Set /a "NamePlayer_!EnityId!_血量+=!EnityId!"
-          )
+            Set /a "NamePlayer_!EnityId!_血量+=!被攻击方防御!"
         )
         Call :玩家死亡判断 !EnityId!
         if Not "!凉了吗!"=="凉了" (
@@ -968,7 +980,7 @@ for /l %%i in (1,1,%敌方单位数量%) do (
     Set /a 价值=<var/价值.calcresult
     if !价值! gtr !历史价值! (
       set /a 敌方EnityId=!敌方单位_%%i!
-      set 历史价值 = !价值!
+      set 历史价值=!价值!
     )
   )
 )
@@ -1372,15 +1384,9 @@ if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
 Set EnityId_伤害=!NamePlayer_%敌方EnityId%_伤害!
 Set /a "NamePlayer_!被攻击单位EnityId!_血量-=!EnityId_伤害!"
 if !被攻击方防御! leq !EnityId_伤害! (
-  Set /a "击穿装甲=!random! %% 20 + 1"
-  if !击穿装甲! leq 10 (
-    Set /a "NamePlayer_!被攻击单位EnityId!_血量+=!被攻击方防御!"
-  )
+  Set /a "NamePlayer_!被攻击单位EnityId!_血量+=!被攻击方防御!"
 ) else (
-  Set /a "击穿装甲=!random! %% 20 + 1"
-  if !击穿装甲! leq 10 (
-    Set /a "NamePlayer_!被攻击单位EnityId!_血量+=!EnityId_伤害!"
-  )
+  Set /a "NamePlayer_!被攻击单位EnityId!_血量+=!被攻击方防御!"
 )
 Call :玩家死亡判断 !被攻击单位EnityId!
 if Not "!凉了吗!"=="凉了" (
@@ -1456,32 +1462,18 @@ echo 按任意键返回！
 Pause>nul
 Goto Draw_Menu
 :回合结束处理
-if "!自定关卡!"=="True" (
-    Set Player_ 1>var/Player_.env
-    for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
-    if !NamePlayer_%%i_血量! gtr 0 (
-      if !NamePlayer_%%i_血量! lss !NamePlayer_%%i_总血量! (
-        Call :Get_Ver 方块Id MapList_!NamePlayer_%%i_X!_!NamePlayer_%%i_Y!
-        if "!方块Id!"=="11" (
-          Set /a NamePlayer_%%i_血量+=1
-          Call :血量条重算 %%i
-        )
+Set Player_ 1>var/Player_.env
+for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
+  if !NamePlayer_%%i_血量! gtr 0 (
+    if !NamePlayer_%%i_血量! lss !NamePlayer_%%i_总血量! (
+      Call :Get_Ver 方块Id MapList_!NamePlayer_%%i_X!_!NamePlayer_%%i_Y!
+      if "!方块Id!"=="11" (
+        Set /a NamePlayer_%%i_血量+=1
       )
-    )
-  )
-) else (
-  if %map% geq 4 (
-    Set Player_ 1>var/Player_.env
-    for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
-      if !NamePlayer_%%i_血量! gtr 0 (
-        if !NamePlayer_%%i_血量! lss !NamePlayer_%%i_总血量! (
-          Call :Get_Ver 方块Id MapList_!NamePlayer_%%i_X!_!NamePlayer_%%i_Y!
-          if "!方块Id!"=="11" (
-            Set /a NamePlayer_%%i_血量+=1
-            Call :血量条重算 %%i
-          )
-        )
+      if "!方块Id!"=="15" (
+        Set /a NamePlayer_%%i_血量-=1
       )
+      Call :血量条重算 %%i
     )
   )
 )
