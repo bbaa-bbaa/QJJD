@@ -1211,6 +1211,8 @@ if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
       Set "DFS_HistoryStep=!DFS_HistoryStep!!DFS_Step!"
       Set DFS_X=!Next_DFS_X!
       Set DFS_Y=!Next_DFS_Y!
+      Set SelectX=!DFS_X!
+      Set SelectY=!DFS_Y!
       Set DFS_Step=0
       Set /a DFS_HistoryLength+=1
       goto :!SettingDFS_Mode!
@@ -1232,6 +1234,8 @@ set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_HistoryLength-=1
 Set /a DFS_X=!DFS_HistoryX:~-2,2!
 Set /a DFS_Y=!DFS_HistoryY:~-2,2!
+Set SelectX=!DFS_X!
+Set SelectY=!DFS_Y!
 Set /a DFS_Step=!DFS_HistoryStep:~-1,1!+1
 Set "DFS_HistoryX=!DFS_HistoryX:~0,-2!"
 Set "DFS_HistoryY=!DFS_HistoryY:~0,-2!"
