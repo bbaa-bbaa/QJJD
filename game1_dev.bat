@@ -1273,7 +1273,9 @@ Goto :!SettingDFS_Mode!
 REM 回溯状态
 if !DFS_HistoryLength! equ 0 (
   Set "回合=敌方移动选定"
-  Goto :!SettingDFS_Mode!
+  Set SelectX=!NamePlayer_%敌方EnityId%_X!
+  Set SelectY=!NamePlayer_%敌方EnityId%_Y!
+  Goto :Main
 )
 set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_HistoryLength-=1
