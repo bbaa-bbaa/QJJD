@@ -198,7 +198,7 @@ if "!回合!"=="单位移动" (
   Call :Show AttackSelect trans
 ) else if "!回合!"=="单位攻击选定" (
   Call :Show AttackSelect trans
-) else if "!回合!"=="敌方移动开始" (
+) else if "!回合!"=="敌方移动开始_DFS" (
   if /i "!SelectType!"=="decideselect" (
     Call :Show MoveSelect trans
   )
@@ -1052,7 +1052,7 @@ if Not "!SelectX!"=="!敌方单位X!" (
 if "!SelectX!"=="!敌方单位X!" (
   if "!SelectY!"=="!敌方单位Y!" (
     Set "SelectType=decideselect"
-    Set "回合=敌方移动开始_DFS"
+    Set 回合=敌方移动开始_DFS
     Call :敌方移动区域渲染
   )
 )
@@ -1120,51 +1120,119 @@ if !XDis! gtr 0 (
     )
   )
 )
-Set "HistoryX=" || Rem 121110+9+8+7
-Set "HistoryY=" || Rem 121110+9+8+7
-Set "HistorySetp="
+Set DFS 1>var/DFS.env
+for /f "tokens=1 delims==" %%i in (var/DFS.env) do (
+  Set "%%~i="
+)
+Set "DFS_HistoryX=" || Rem 121110+9+8+7
+Set "DFS_HistoryY=" || Rem 121110+9+8+7
+Set "DFS_HistoryStep="
+Set /a DFS_HistoryLength=0
 Set DFS_X=!SelectX!
 Set DFS_Y=!SelectY!
-Set DFS_Setp=0
+Set DFS_Step=0
 :DFS_Main
-if !DFS_X! == !最近单位X! (
-  if !DFS_Y! == !最近单位Y! (
-    Rem Found
+title 目标!最近单位X!/!最近单位Y!位置!DFS_X!/!DFS_Y!
+if !DFS_X!==!最近单位X! (
+  if !DFS_Y!==!最近单位Y! (
     Goto :DFS_Found
   )
 )
-Set /a NextRule=!MoveRule:~%DFS_Setp%,1!*2
+Set /a NextRule=!MoveRule:~%DFS_Step%,1!*2
 call Set Next_DFS_X=!DFS_X!%%MoveX:~!NextRule!,2%%
 Set /a Next_DFS_X=!Next_DFS_X!
 call Set Next_DFS_Y=!DFS_Y!%%MoveY:~!NextRule!,2%%
 Set /a Next_DFS_Y=!Next_DFS_Y!
 Set "IsWalk=True"
-if !Next_DFS_X! lss !敌方EnityId_移动起始X! (
-  Set "IsWalk=False"
-)
-if !Next_DFS_X! gtr !敌方EnityId_移动结束X! (
-  Set "IsWalk=False"
-)
-if !Next_DFS_Y! lss !敌方EnityId_移动起始Y! (
-  Set "IsWalk=False"
-)
-if !Next_DFS_Y! gtr !敌方EnityId_移动结束Y! (
-  Set "IsWalk=False"
-)
-for %%a in (%无法通行的方块ID%) do (
-  if "!MapList_%Next_DFS_X%_%Next_DFS_Y%!"=="%%a" (
+if !Next_DFS_X! GEQ 0 (
+  if !Next_DFS_Y! GEQ 0 (
+    if !Next_DFS_X! Lss 15 (
+      if !Next_DFS_Y! Lss 11 (
+        for %%a in (%无法通行的方块ID%) do (
+          if "!MapList_%Next_DFS_X%_%Next_DFS_Y%!"=="%%a" (
+            Set "IsWalk=False"
+          )
+        )
+        if defined Player_!Next_DFS_X!_!Next_DFS_Y! (
+            Set "IsWalk=False"
+        )
+        if "!Next_DFS_X!"=="!NamePlayer_%敌方EnityId%_X!" (
+          if "!Next_DFS_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
+            Set "IsWalk=True"
+          )
+        )
+        if "!Next_DFS_X!"=="!NamePlayer_%离得最近的单位Id%_X!" (
+          if "!Next_DFS_Y!"=="!NamePlayer_%离得最近的单位Id%_Y!" (
+            Set "IsWalk=True"
+          )
+        )
+      ) else (
+        Set "IsWalk=False"
+      )
+    ) else (
+      Set "IsWalk=False"
+    )
+  ) else (
     Set "IsWalk=False"
   )
+) else (
+  Set "IsWalk=False"
 )
-if defined Player_!Next_DFS_X!_!Next_DFS_Y! (
-    Set "IsWalk=False"
-)
-if "!Next_DFS_X!"=="!NamePlayer_%敌方EnityId%_X!" (
-  if "!Next_DFS_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
-    Set "IsWalk=True"
+if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
+    if "!IsWalk!"=="True" (
+      set DFS_Walked_!Next_DFS_X!_!Next_DFS_Y!=True
+      if !DFS_X! lss 10 (
+        Set "DFS_HistoryX=!DFS_HistoryX!+!DFS_X!"
+      ) else (
+        Set "DFS_HistoryX=!DFS_HistoryX!!DFS_X!"
+      )
+      if !DFS_Y! lss 10 (
+        Set "DFS_HistoryY=!DFS_HistoryY!+!DFS_Y!"
+      ) else (
+        Set "DFS_HistoryY=!DFS_HistoryY!!DFS_Y!"
+      )
+      Set "DFS_HistoryStep=!DFS_HistoryStep!!DFS_Step!"
+      Set DFS_X=!Next_DFS_X!
+      Set DFS_Y=!Next_DFS_Y!
+      Set /a DFS_HistoryLength+=1
+      goto :DFS_Main
   )
 )
-pause
+if !DFS_Step! lss 3 (
+  set /a DFS_Step+=1
+) else (
+  Goto :DFS_Back
+)
+goto :DFS_Main
+:DFS_Back
+REM 回溯状态
+Set /a DFS_HistoryLength-=1
+set "DFS_Walked_!DFS_X!_!DFS_Y!="
+Set /a DFS_X=!DFS_HistoryX:~-2,2!
+Set /a DFS_Y=!DFS_HistoryY:~-2,2!
+Set /a DFS_Step=!DFS_HistoryStep:~-1,1!+1
+Set "DFS_HistoryX=!DFS_HistoryX:~0,-2!"
+Set "DFS_HistoryY=!DFS_HistoryY:~0,-2!"
+Set "DFS_HistoryStep=!DFS_HistoryStep:~0,-1!"
+if !DFS_Step! geq 4 (
+  goto :DFS_Back
+)
+goto :DFS_Main
+:DFS_Found
+set "回合=敌方移动AI处理"
+Set /a DFS_MoveStep=0
+goto :Main
+:敌方移动AI处理
+if !DFS_HistoryLength!==!DFS_MoveStep! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+Set /a SelectX=!DFS_HistoryX:~0,2!
+Set /a SelectY=!DFS_HistoryY:~0,2!
+Set "DFS_HistoryX=!DFS_HistoryX:~2!"
+Set "DFS_HistoryY=!DFS_HistoryY:~2!"
+echo !DFS_HistoryX!;!DFS_HistoryY!;!SelectX!;!SelectY!
+Set /a DFS_MoveStep+=1
 Goto :Main
 :敌方移动选定
 Set "SelectType=select"
@@ -1344,38 +1412,6 @@ echo.
 echo 按任意键返回！
 Pause>nul
 Goto Draw_Menu
-:敌方移动AI处理
-Set /a 敌方移动步数-=1
-if !NamePlayer_%敌方EnityId%_血量! gtr !溜走血量! (
-  if "!敌方移动步数!"=="!敌方移动步数最小位置!" (
-    Set "回合=敌方移动选定"
-    Goto :Main
-  )
-) else (
-  if "!敌方移动步数!"=="!敌方移动步数最大位置!" (
-    Set "回合=敌方移动选定"
-    Goto :Main
-  )
-)
-if "!敌方移动逆向列表!"=="" (
-  Set "回合=敌方移动选定"
-  Goto :Main
-)
-Set "Direction=!敌方移动逆向列表:~0,1!"
-Set "敌方移动逆向列表=!敌方移动逆向列表:~1!"
-if "!Direction!"=="1" (
-    Set /a SelectY-=1
-)
-if "!Direction!"=="2" (
-    Set /a SelectY+=1
-)
-if "!Direction!"=="3" (
-    Set /a SelectX-=1
-)
-if "!Direction!"=="4" (
-    Set /a SelectX+=1
-)
-Goto :Main
 :回合结束处理
 if "!自定关卡!"=="True" (
     Set Player_ 1>var/Player_.env
