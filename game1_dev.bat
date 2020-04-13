@@ -427,7 +427,7 @@ if "!自定关卡!"=="True" (
   Set "玩家文件名=./自定关卡/%自定关卡名%/Players.csv"
 )
 for /f "eol=# Tokens=1-10 delims=," %%a in (%玩家文件名%) do (
-  if %%b gtr 0 (
+  if %%d gtr 0 (
     Set /a 单位数量+=1
     Set "Player_%%a_%%b=!单位数量!"
     Set "NamePlayer_!单位数量!_X=%%a"
