@@ -133,16 +133,27 @@ Set 回合数=1
 Set "回合=单位移动"
 Set EnityId=
 Set 敌方EnityId=
+Set "PostiveAI=disable"
 title 关卡:!map! 按任意键继续
 if Not "!自定关卡!"=="True" (
   For /f "delims=" %%i in (./maps/Story%map%.txt) do (
     echo;%%i
     pause>nul
   )
+  if exist ./maps/%map%.env (
+    for /f "delims=" %%i in (./maps/%map%.env) do (
+      Set "%%~i"
+    )
+  )
 ) else (
   For /f "delims=" %%i in (./自定关卡/%自定关卡名%/Story.txt) do (
     echo;%%i
     pause>nul
+  )
+  if exist ./自定关卡/%自定关卡名%/%自定关卡名%.env (
+    for /f "delims=" %%i in (./自定关卡/%自定关卡名%/%自定关卡名%.env) do (
+      Set "%%~i"
+    )
   )
 )
 cls
@@ -1039,6 +1050,9 @@ if "!敌方选择完毕!"=="t" (
     if !敌方单位数量! geq 2 (
       Set "追踪阵营=敌方"
     )
+  )
+  if !PostiveAI!=="Enable" (
+    Set "追踪阵营=我方"
   )
   Set !追踪阵营!单位_ 1>var/!追踪阵营!单位_.env
   for /f "Tokens=1-2 delims==" %%i in (var/!追踪阵营!单位_.env) do (
