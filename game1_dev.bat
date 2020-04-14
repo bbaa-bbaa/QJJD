@@ -317,11 +317,7 @@ if "%block%"=="15" (
 )
 if "%block%"=="16" (
   set 地形=雪地
-  set 属性=攻击距离-1 获得20%概率闪避
-)
-if "%block%"=="6" (
-  set 地形=雪山
-  set 属性=无法通行
+  set 属性=移动距离-1 获得20%概率闪避
 )
 Set "SPlayer_Id="
 if defined Player_%SelectX%_%SelectY% (
@@ -1243,6 +1239,11 @@ if !Next_DFS_X! GEQ 0 (
 ) else (
   Set "IsWalk=False"
 )
+Rem Add-on by OldLiu
+If Defined DFS_DeadPath_!Next_DFS_X!_!Next_DFS_Y! (
+  Set "IsWalk=False"
+)
+Rem Add-on End
 if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
     if "!IsWalk!"=="True" (
       set "DFS_Walked_!Next_DFS_X!_!Next_DFS_Y!=True"
@@ -1284,6 +1285,10 @@ set "DFS_Walked_!DFS_X!_!DFS_Y!="
 Set /a DFS_HistoryLength-=1
 Set /a DFS_X=!DFS_HistoryX:~-2,2!
 Set /a DFS_Y=!DFS_HistoryY:~-2,2!
+Rem Add-on by OldLiu
+Set DFS_DeadPath_!DFS_X!_!DFS_Y!=True
+rem mshta vbscript:msgbox("!DFS_X! !DFS_Y!")(close)
+Rem Add-on End
 Set SelectX=!DFS_X!
 Set SelectY=!DFS_Y!
 Set /a DFS_Step=!DFS_HistoryStep:~-1,1!+1
