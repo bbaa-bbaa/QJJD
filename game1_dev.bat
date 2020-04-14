@@ -319,6 +319,22 @@ if "%block%"=="16" (
   set 地形=雪地
   set 属性=移动距离-1 获得20%概率闪避
 )
+if "%block%"=="17" (
+  set 地形=雪山
+  set 属性=无法通行
+)
+if "%block%" geq "18" (
+	if %block% leq "24" (
+		set 地形=道路
+		set 属性=可以通行
+	)
+)
+if "%block%" geq "25" (
+	if %block% leq "26" (
+		set 地形=水域
+		set 属性=无法通行
+	)
+)
 Set "SPlayer_Id="
 if defined Player_%SelectX%_%SelectY% (
   Set "SPlayer_Id=!Player_%SelectX%_%SelectY%!"
