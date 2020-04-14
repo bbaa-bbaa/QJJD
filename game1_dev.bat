@@ -122,7 +122,7 @@ Set "image=unload Space"
 Set "image=buffer Space"
 Set "image=stretch Space 64 64"
 Set "SelectType=select"
-Set "无法通行的方块ID=2,3,6,8,9,17"
+Set "无法通行的方块ID=2,3,6,8,9,17,25,26"
 Set SelectX=0
 Set SelectY=0
 setlocal
