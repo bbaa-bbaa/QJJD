@@ -112,6 +112,7 @@ cls
 if exist "分辨率压缩" (
   Set /p "自定义分辨率="<分辨率压缩
 )
+:LoadLevel
 Set "image=target cmd"
 Set "image=cls"
 Set "image=unload Main"
@@ -124,8 +125,6 @@ Set "SelectType=select"
 Set "无法通行的方块ID=2,3,6,8,9,17"
 Set SelectX=0
 Set SelectY=0
-Set "敌方寻路指数=15"
-:LoadLevel
 setlocal
 cls
 Set 渲染次数=0
@@ -610,7 +609,7 @@ if Not "!BufName!"=="Main" (
 )
 Goto :Eof
 :KeyDown
-choice /c wsadj /n>nul 2>nul
+choice /c wsadjr /n>nul 2>nul
 if !errorlevel!==1 (
   Rem Up
   if !SelectY! geq 1 (
@@ -767,6 +766,10 @@ if !errorlevel!==5 (
         Goto Main
       )
     )
+  )
+  if !errorlevel!==6 (
+    Endlocal
+    goto :LoadLevel
   )
 Goto :Main
 :IsWalk
