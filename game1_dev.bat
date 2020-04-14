@@ -1282,13 +1282,13 @@ if !DFS_HistoryLength! equ 0 (
   Goto :Main
 )
 set "DFS_Walked_!DFS_X!_!DFS_Y!="
-Set /a DFS_HistoryLength-=1
-Set /a DFS_X=!DFS_HistoryX:~-2,2!
-Set /a DFS_Y=!DFS_HistoryY:~-2,2!
 Rem Add-on by OldLiu
 Set DFS_DeadPath_!DFS_X!_!DFS_Y!=True
 rem mshta vbscript:msgbox("!DFS_X! !DFS_Y!")(close)
 Rem Add-on End
+Set /a DFS_HistoryLength-=1
+Set /a DFS_X=!DFS_HistoryX:~-2,2!
+Set /a DFS_Y=!DFS_HistoryY:~-2,2!
 Set SelectX=!DFS_X!
 Set SelectY=!DFS_Y!
 Set /a DFS_Step=!DFS_HistoryStep:~-1,1!+1
