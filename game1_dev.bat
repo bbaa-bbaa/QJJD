@@ -1370,28 +1370,33 @@ if %SelectY% lss 10 (
 )
 Set /a BFS_Queue_Length=1
 Set BFS_Dist_%SelectX%_%SelectX%=0
-:BFS_Main
-for /l %%a in (1,0,2) do (
-  Set /a BFS_X=!BFS_Queue_X:~0,2!|| Rem 取出队列 
-  Set /a BFS_Y=!BFS_Queue_Y:~0,2!
+(
+  :BFS_Main
   if !BFS_X!==!最近单位X! (
     if !BFS_Y!==!最近单位Y! (
       Goto :BFS_Finish
     )
   )
+  if !BFS_Queue_Length! equ 0 (
+    Goto :BFS_Finish
+  )
+  Set /a BFS_X=!BFS_Queue_X:~0,2!|| Rem 取出队列 
+  Set /a BFS_Y=!BFS_Queue_Y:~0,2!
+  
   Set "BFS_Queue_X=!BFS_Queue_X:~2!"
   Set "BFS_Queue_Y=!BFS_Queue_Y:~2!"
+  Set /a BFS_Queue_Length-=1
+  echo !BFS_Queue_Length!
   for /l %%b in (0,2,6) do (
-    Set /a BFS_Next_X=!BFS_X!!BFSMoveX:%%b,2!
-    Set /a BFS_Next_Y=!BFS_Y!!BFSMoveY:%%b,2!
-    Set BFS&pause
+    Set /a BFS_Next_X=!BFS_X!!BFSMoveX:~%%b,2!
+    Set /a BFS_Next_Y=!BFS_Y!!BFSMoveY:~%%b,2!
     Set "IsWalk=True"
     if !BFS_Next_X! GEQ 0 (
       if !BFS_Next_Y! GEQ 0 (
         if !BFS_Next_X! Lss 15 (
           if !BFS_Next_Y! Lss 11 (
             for %%c in (%无法通行的方块ID%) do (
-              for /f "delims=, tokens=1,2" %%d in ("!BFS_Next_X!,!BFS_Next_Y!") (
+              for /f "delims=, tokens=1-2" %%d in ("!BFS_Next_X!,!BFS_Next_Y!") do (
                 if "!MapList_%%d_%%e!"=="%%c" (
                   Set "IsWalk=False"
                 )
@@ -1437,9 +1442,11 @@ for /l %%a in (1,0,2) do (
         ) else (
           Set "BFS_Queue_Y=!BFS_Queue_Y!!BFS_Next_Y!"
         )
+        Set /a BFS_Queue_Length+=1
       )
     )
   )
+  goto :BFS_Main
 )
 :BFS_Finish
 Set BFS
