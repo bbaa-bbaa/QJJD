@@ -408,6 +408,9 @@ Set image=stretch MoveSelect 960 704
 Set image=target MoveSelect
 Set "EnityId=!Player_%SelectX%_%SelectY%!"
 Set "EnityId_移动距离=!NamePlayer_%EnityId%_移动距离!"
+if "!MapList_%SelectX%_%SelectY%!"=="16" (
+  Set /a EnityId_移动距离-=1
+) 
 Set /a "EnityId_移动起始X=!SelectX!-!EnityId_移动距离!"
 Set /a "EnityId_移动起始Y=!SelectY!-!EnityId_移动距离!"
 Set /a "EnityId_移动结束X=!SelectX!+!EnityId_移动距离!"
@@ -443,8 +446,6 @@ If !MapList_%SelectX%_%SelectY%!==1 (
   Set /a "EnityId_攻击距离=!NamePlayer_%EnityId%_攻击距离!+1"
 ) else if !MapList_%SelectX%_%SelectY%!==10 (
   Set /a "EnityId_攻击距离=!NamePlayer_%EnityId%_攻击距离!+1"
-) else if !MapList_%SelectX%_%SelectY%!==16 (
-  Set /a "EnityId_攻击距离=!NamePlayer_%EnityId%_攻击距离!-1"
 ) else (
   Set "EnityId_攻击距离=!NamePlayer_%EnityId%_攻击距离!"
 )
@@ -622,7 +623,7 @@ if Not "!BufName!"=="Main" (
 )
 Goto :Eof
 :KeyDown
-choice /c wsadjr /n>nul 2>nul
+choice /c wsadjrt /n>nul 2>nul
 if !errorlevel!==1 (
   Rem Up
   if !SelectY! geq 1 (
@@ -783,6 +784,10 @@ if !errorlevel!==5 (
   if !errorlevel!==6 (
     Endlocal
     goto :LoadLevel
+  )
+  if !errorlevel!==7 (
+    Endlocal
+    goto :Setting
   )
 Goto :Main
 :IsWalk
@@ -1054,6 +1059,9 @@ if "!敌方选择完毕!"=="t" (
   Set "敌方单位X=!NamePlayer_%敌方EnityId%_X!"
   Set "敌方单位Y=!NamePlayer_%敌方EnityId%_Y!"
   Set "敌方EnityId_移动距离=!NamePlayer_%敌方EnityId%_移动距离!"
+  if "!MapList_%SelectX%_%SelectY%!"=="16" (
+    Set /a 敌方EnityId_移动距离-=1
+  ) 
   Set /a "敌方EnityId_移动起始X=!敌方单位X!-!敌方EnityId_移动距离!"
   Set /a "敌方EnityId_移动起始Y=!敌方单位Y!-!敌方EnityId_移动距离!"
   Set /a "敌方EnityId_移动结束X=!敌方单位X!+!敌方EnityId_移动距离!"
@@ -1370,11 +1378,19 @@ if %SelectY% lss 10 (
 )
 Set /a BFS_Queue_Length=1
 Set BFS_Dist_%SelectX%_%SelectX%=0
+Set "BFS_StackPath_X="
+Set "BFS_StackPath_Y="
+Set BFS_Next_Path_X=!最近单位X!
+Set BFS_Next_Path_Y=!最近单位Y!
 (
-  :BFS_Main
+:BFS_Main
+  if !BFS_Queue_Length! geq 500 (
+   echo BFS_Queue_Length
+   echo 变量长度超过限制!
+  )
   if !BFS_X!==!最近单位X! (
     if !BFS_Y!==!最近单位Y! (
-      Goto :BFS_Finish
+     REM Goto :BFS_Finish
     )
   )
   if !BFS_Queue_Length! equ 0 (
@@ -1382,11 +1398,9 @@ Set BFS_Dist_%SelectX%_%SelectX%=0
   )
   Set /a BFS_X=!BFS_Queue_X:~0,2!|| Rem 取出队列 
   Set /a BFS_Y=!BFS_Queue_Y:~0,2!
-  
   Set "BFS_Queue_X=!BFS_Queue_X:~2!"
   Set "BFS_Queue_Y=!BFS_Queue_Y:~2!"
   Set /a BFS_Queue_Length-=1
-  echo !BFS_Queue_Length!
   for /l %%b in (0,2,6) do (
     Set /a BFS_Next_X=!BFS_X!!BFSMoveX:~%%b,2!
     Set /a BFS_Next_Y=!BFS_Y!!BFSMoveY:~%%b,2!
@@ -1427,9 +1441,13 @@ Set BFS_Dist_%SelectX%_%SelectX%=0
     ) else (
       Set "IsWalk=False"
     )
+    Set /a BFS_Image_X=!BFS_X!*64
+    Set /a BFS_Image_Y=!BFS_Y!*64+64
+    set "image=target cmd"
+    set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y!"
     if "!IsWalk!"=="True" (
       if not defined BFS_Dist_!BFS_Next_X!_!BFS_Next_Y! (
-        Set /a BFS_Dist_!BFS_Next_X!_!BFS_Next_Y!=BFS_Dist_!BFS_X!_!BFS_Y!+1
+        Set "BFS_Dist_!BFS_Next_X!_!BFS_Next_Y!=t"
         Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_X=!BFS_X!
         Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_Y=!BFS_Y!
         if !BFS_Next_X! lss 10 (
@@ -1449,8 +1467,60 @@ Set BFS_Dist_%SelectX%_%SelectX%=0
   goto :BFS_Main
 )
 :BFS_Finish
-Set BFS
-pause
+if !BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X! lss 10 (
+  Set "BFS_StackPath_X=+!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!!BFS_StackPath_X!"
+) else (
+  Set "BFS_StackPath_X=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!!BFS_StackPath_X!"
+)
+if !BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y! lss 10 (
+  Set "BFS_StackPath_Y=+!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!!BFS_StackPath_Y!"
+) else (
+  Set "BFS_StackPath_Y=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!!BFS_StackPath_Y!"
+)
+(
+  Set BFS_Next_Path_X=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!
+  Set BFS_Next_Path_Y=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!
+)
+if not "!BFS_Next_Path_X!"=="!NamePlayer_%敌方EnityId%_X!" (
+  goto :BFS_Finish
+)
+if not "!BFS_Next_Path_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
+  goto :BFS_Finish
+)
+set "回合=敌方移动AI处理_BFS"
+goto Main
+:敌方移动AI处理_BFS
+Set /a BFS_MoveTempX=!BFS_StackPath_X:~0,2!
+Set /a BFS_MoveTempY=!BFS_StackPath_Y:~0,2!
+if !BFS_MoveTempX! lss !敌方EnityId_移动起始X! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !BFS_MoveTempX! gtr !敌方EnityId_移动结束X! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !BFS_MoveTempY! lss !敌方EnityId_移动起始Y! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if !BFS_MoveTempY! gtr !敌方EnityId_移动结束Y! (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+Set /a SelectX=!BFS_MoveTempX!
+Set /a SelectY=!BFS_MoveTempY!
+Set "BFS_StackPath_X=!BFS_StackPath_X:~2!"
+Set "BFS_StackPath_Y=!BFS_StackPath_Y:~2!"
+if not Defined BFS_StackPath_X (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+if not Defined BFS_StackPath_Y (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
+Goto :Main
 :敌方移动选定
 Set "SelectType=select"
 Call :单位移动 !NamePlayer_%敌方EnityId%_X! !NamePlayer_%敌方EnityId%_Y! !SelectX! !SelectY!
