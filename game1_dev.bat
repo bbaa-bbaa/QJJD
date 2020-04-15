@@ -123,7 +123,7 @@ Set "image=unload Space"
 Set "image=buffer Space"
 Set "image=stretch Space 64 64"
 Set "SelectType=select"
-Set "无法通行的方块ID=2,3,6,8,9,17,25,26"
+Set "无法通行的方块ID=2,3,6,8,9,17,25,26,27,28,29,30,31,32"
 Set SelectX=0
 Set SelectY=0
 setlocal
@@ -328,6 +328,12 @@ if "%block%" geq "18" (
 	if %block% leq "24" (
 		set 地形=道路
 		set 属性=可以通行
+	)
+)
+if "%block%" geq "27" (
+	if %block% leq "32" (
+		set 地形=城墙
+		set 属性=不可通行
 	)
 )
 if "%block%" geq "25" (
