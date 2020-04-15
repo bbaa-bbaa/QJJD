@@ -3,6 +3,7 @@
 @echo off 2>nul 3>nul
 mode con cols=120 lines=48
 setlocal enabledelayedexpansion
+Set 寻路方式=BFS
 Set SettingDFS_DebugMode=1|| REM 1显示搜索过程0不显示
 if !SettingDFS_DebugMode!==1 (
   set SettingDFS_Mode=Main
@@ -1129,7 +1130,7 @@ if Not "!SelectX!"=="!敌方单位X!" (
 if "!SelectX!"=="!敌方单位X!" (
   if "!SelectY!"=="!敌方单位Y!" (
     Set "SelectType=decideselect"
-    Set 回合=敌方移动开始_DFS
+    Set 回合=敌方移动开始_!寻路方式!
     Call :敌方移动区域渲染
   )
 )
@@ -1216,30 +1217,30 @@ if !DFS_X!==!最近单位X! (
   )
 )
 Set /a NextRule=!DFS_MoveRule:~%DFS_Step%,1!*2
-call Set Next_DFS_X=!DFS_X!%%DFSMoveX:~!NextRule!,2%%
-Set /a Next_DFS_X=!Next_DFS_X!
-call Set Next_DFS_Y=!DFS_Y!%%DFSMoveY:~!NextRule!,2%%
-Set /a Next_DFS_Y=!Next_DFS_Y!
+call Set DFS_Next_X=!DFS_X!%%DFSMoveX:~!NextRule!,2%%
+Set /a DFS_Next_X=!DFS_Next_X!
+call Set DFS_Next_Y=!DFS_Y!%%DFSMoveY:~!NextRule!,2%%
+Set /a DFS_Next_Y=!DFS_Next_Y!
 Set "IsWalk=True"
-if !Next_DFS_X! GEQ 0 (
-  if !Next_DFS_Y! GEQ 0 (
-    if !Next_DFS_X! Lss 15 (
-      if !Next_DFS_Y! Lss 11 (
+if !DFS_Next_X! GEQ 0 (
+  if !DFS_Next_Y! GEQ 0 (
+    if !DFS_Next_X! Lss 15 (
+      if !DFS_Next_Y! Lss 11 (
         for %%a in (%无法通行的方块ID%) do (
-          if "!MapList_%Next_DFS_X%_%Next_DFS_Y%!"=="%%a" (
+          if "!MapList_%DFS_Next_X%_%DFS_Next_Y%!"=="%%a" (
             Set "IsWalk=False"
           )
         )
-        if defined Player_!Next_DFS_X!_!Next_DFS_Y! (
+        if defined Player_!DFS_Next_X!_!DFS_Next_Y! (
             Set "IsWalk=False"
         )
-        if "!Next_DFS_X!"=="!NamePlayer_%敌方EnityId%_X!" (
-          if "!Next_DFS_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
+        if "!DFS_Next_X!"=="!NamePlayer_%敌方EnityId%_X!" (
+          if "!DFS_Next_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
             Set "IsWalk=True"
           )
         )
-        if "!Next_DFS_X!"=="!NamePlayer_%离得最近的单位Id%_X!" (
-          if "!Next_DFS_Y!"=="!NamePlayer_%离得最近的单位Id%_Y!" (
+        if "!DFS_Next_X!"=="!NamePlayer_%离得最近的单位Id%_X!" (
+          if "!DFS_Next_Y!"=="!NamePlayer_%离得最近的单位Id%_Y!" (
             Set "IsWalk=True"
           )
         )
@@ -1256,13 +1257,13 @@ if !Next_DFS_X! GEQ 0 (
   Set "IsWalk=False"
 )
 Rem Add-on by OldLiu
-If Defined DFS_DeadPath_!Next_DFS_X!_!Next_DFS_Y! (
+If Defined DFS_DeadPath_!DFS_Next_X!_!DFS_Next_Y! (
   Set "IsWalk=False"
 )
 Rem Add-on End
-if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
+if NOT Defined DFS_Walked_!DFS_Next_X!_!DFS_Next_Y! (
     if "!IsWalk!"=="True" (
-      set "DFS_Walked_!Next_DFS_X!_!Next_DFS_Y!=True"
+      set "DFS_Walked_!DFS_Next_X!_!DFS_Next_Y!=True"
       if !DFS_X! lss 10 (
         Set "DFS_HistoryX=!DFS_HistoryX!+!DFS_X!"
       ) else (
@@ -1274,8 +1275,8 @@ if NOT Defined DFS_Walked_!Next_DFS_X!_!Next_DFS_Y! (
         Set "DFS_HistoryY=!DFS_HistoryY!!DFS_Y!"
       )
       Set "DFS_HistoryStep=!DFS_HistoryStep!!DFS_Step!"
-      Set DFS_X=!Next_DFS_X!
-      Set DFS_Y=!Next_DFS_Y!
+      Set DFS_X=!DFS_Next_X!
+      Set DFS_Y=!DFS_Next_Y!
       Set SelectX=!DFS_X!
       Set SelectY=!DFS_Y!
       Set DFS_Step=0
@@ -1316,10 +1317,10 @@ if !DFS_Step! geq 4 (
 )
 goto :!SettingDFS_Mode!
 :DFS_Found
-set "回合=敌方移动AI处理"
+set "回合=敌方移动AI处理_DFS"
 Set /a DFS_MoveStep=0
 goto :Main
-:敌方移动AI处理
+:敌方移动AI处理_DFS
 if !DFS_HistoryLength!==!DFS_MoveStep! (
   Set "回合=敌方移动选定"
   Goto :Main
@@ -1348,6 +1349,101 @@ Set "DFS_HistoryX=!DFS_HistoryX:~2!"
 Set "DFS_HistoryY=!DFS_HistoryY:~2!"
 Set /a DFS_MoveStep+=1
 Goto :Main
+:敌方移动开始_BFS
+Set BFS 1>var/BFS.env
+for /f "tokens=1 delims==" %%i in (var/BFS.env) do (
+  Set "%%~i="
+)
+Rem 初始化方向顺序
+Set "BFSMoveX=+0-1+0+1" || REM 上左下右
+Set "BFSMoveY=-1+0+1+0"
+Rem 初始化起始顶点
+if %SelectX% lss 10 (
+  Set "BFS_Queue_X=+%SelectX%"
+) else (
+  Set "BFS_Queue_X=%SelectX%"
+)
+if %SelectY% lss 10 (
+  Set "BFS_Queue_Y=+%SelectY%"
+) else (
+  Set "BFS_Queue_Y=%SelectY%"
+)
+Set /a BFS_Queue_Length=1
+Set BFS_Dist_%SelectX%_%SelectX%=0
+:BFS_Main
+for /l %%a in (1,0,2) do (
+  Set /a BFS_X=!BFS_Queue_X:~0,2!|| Rem 取出队列 
+  Set /a BFS_Y=!BFS_Queue_Y:~0,2!
+  if !BFS_X!==!最近单位X! (
+    if !BFS_Y!==!最近单位Y! (
+      Goto :BFS_Finish
+    )
+  )
+  Set "BFS_Queue_X=!BFS_Queue_X:~2!"
+  Set "BFS_Queue_Y=!BFS_Queue_Y:~2!"
+  for /l %%b in (0,2,6) do (
+    Set /a BFS_Next_X=!BFS_X!!BFSMoveX:%%b,2!
+    Set /a BFS_Next_Y=!BFS_Y!!BFSMoveY:%%b,2!
+    Set BFS&pause
+    Set "IsWalk=True"
+    if !BFS_Next_X! GEQ 0 (
+      if !BFS_Next_Y! GEQ 0 (
+        if !BFS_Next_X! Lss 15 (
+          if !BFS_Next_Y! Lss 11 (
+            for %%c in (%无法通行的方块ID%) do (
+              for /f "delims=, tokens=1,2" %%d in ("!BFS_Next_X!,!BFS_Next_Y!") (
+                if "!MapList_%%d_%%e!"=="%%c" (
+                  Set "IsWalk=False"
+                )
+              )
+            )
+            if defined Player_!BFS_Next_X!_!BFS_Next_Y! (
+                Set "IsWalk=False"
+            )
+            if "!BFS_Next_X!"=="!NamePlayer_%敌方EnityId%_X!" (
+              if "!BFS_Next_Y!"=="!NamePlayer_%敌方EnityId%_Y!" (
+                Set "IsWalk=True"
+              )
+            )
+            if "!BFS_Next_X!"=="!NamePlayer_%离得最近的单位Id%_X!" (
+              if "!BFS_Next_Y!"=="!NamePlayer_%离得最近的单位Id%_Y!" (
+                Set "IsWalk=True"
+              )
+            )
+          ) else (
+            Set "IsWalk=False"
+          )
+        ) else (
+          Set "IsWalk=False"
+        )
+      ) else (
+        Set "IsWalk=False"
+      )
+    ) else (
+      Set "IsWalk=False"
+    )
+    if "!IsWalk!"=="True" (
+      if not defined BFS_Dist_!BFS_Next_X!_!BFS_Next_Y! (
+        Set /a BFS_Dist_!BFS_Next_X!_!BFS_Next_Y!=BFS_Dist_!BFS_X!_!BFS_Y!+1
+        Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_X=!BFS_X!
+        Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_Y=!BFS_Y!
+        if !BFS_Next_X! lss 10 (
+          Set "BFS_Queue_X=!BFS_Queue_X!+!BFS_Next_X!"
+        ) else (
+          Set "BFS_Queue_X=!BFS_Queue_X!!BFS_Next_X!"
+        )
+        if !BFS_Next_Y! lss 10 (
+          Set "BFS_Queue_Y=!BFS_Queue_Y!+!BFS_Next_Y!"
+        ) else (
+          Set "BFS_Queue_Y=!BFS_Queue_Y!!BFS_Next_Y!"
+        )
+      )
+    )
+  )
+)
+:BFS_Finish
+Set BFS
+pause
 :敌方移动选定
 Set "SelectType=select"
 Call :单位移动 !NamePlayer_%敌方EnityId%_X! !NamePlayer_%敌方EnityId%_Y! !SelectX! !SelectY!
