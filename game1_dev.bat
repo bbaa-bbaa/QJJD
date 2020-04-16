@@ -1488,7 +1488,7 @@ Set BFS_Next_Path_Y=!最近单位Y!
       Set /a BFS_Image_X=!BFS_X!*64
       Set /a BFS_Image_Y=!BFS_Y!*64
       set "image=target BFSCover"
-      set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y!"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y!"
       set "image=unload BFSCoverWithNewSize"
       set "image=buffer BFSCoverWithNewSize"
       set "image=stretch BFSCoverWithNewSize 960 704"
@@ -1501,7 +1501,7 @@ Set BFS_Next_Path_Y=!最近单位Y!
       Set /a BFS_Image_X=!BFS_X!*64
       Set /a BFS_Image_Y=!BFS_Y!*64+64
       set "image=target cmd"
-      set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y! trans"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y! trans"
     )
     if "!IsWalk!"=="True" (
       if not defined BFS_Dist_!BFS_Next_X!_!BFS_Next_Y! (
