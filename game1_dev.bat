@@ -254,6 +254,10 @@ if "!回合!"=="单位移动" (
   if /i "!SelectType!"=="decideselect" (
     Call :Show MoveSelect trans
   )
+) else if "!回合!"=="敌方移动AI处理_BFS" (
+  if /i "!SelectType!"=="decideselect" (
+    Call :Show MoveSelect trans
+  )
 ) else if "!回合!"=="敌方攻击_选择动画" (
   if /i "!SelectType!"=="decideselect" (
     Call :Show AttackSelect trans
@@ -465,8 +469,8 @@ for /l %%a in (%EntityId_移动起始Y%,1,%EntityId_移动结束Y%) do (
     )
     if "!IsWalk!"=="True" (
       if not defined Player_%%b_%%a (
-        Set /a XDis=%%b-%SelectX%
-        Set /a YDis=%%a-%SelectY%
+        Set /a XDis=%%b-%MoveSource_X%
+        Set /a YDis=%%a-%MoveSource_Y%
         if !XDis! lss 0 (
           Set /a XDis*=-1
         )
@@ -831,10 +835,12 @@ if !errorlevel!==5 (
           )
         ) 
         Set /a "EntityInfo_!EntityId!_血量-=!EntityId_伤害!"
-        if !被攻击方防御! leq !EntityId_伤害! (
-           Set /a "EntityInfo_!EntityId!_血量+=!被攻击方防御!"
-        ) else (
+        if not !EntityId_伤害! equ 0 (
+          if !被攻击方防御! lss !EntityId_伤害! (
             Set /a "EntityInfo_!EntityId!_血量+=!被攻击方防御!"
+          ) else (
+              Set /a "EntityInfo_!EntityId!_血量+=!EntityId_伤害!-1"
+          )
         )
         Call :玩家死亡判断 !EntityId!
         if Not "!凉了吗!"=="凉了" (
@@ -864,8 +870,8 @@ if !errorlevel!==5 (
 Goto :Main
 :IsWalk
 Set "IsWalk=True"
-Set /a XDis=!SelectX!-!EntityInfo_%EntityId%_X!
-Set /a YDis=!SelectY!-!EntityInfo_%EntityId%_Y!
+Set /a XDis=!SelectX!-!MoveSource_X!
+Set /a YDis=!SelectY!-!MoveSource_Y!
 if !XDis! lss 0 (
   Set /a XDis*=-1
 )
@@ -1252,22 +1258,28 @@ for /l %%a in (%敌方EntityId_移动起始Y%,1,%敌方EntityId_移动结束Y%) do (
         Set "IsWalk=False"
       )
     )
+    if defined Player_%%b_%%a (
+      Set "IsWalk=False"
+    )
+    if %%b==!EntityInfo_%敌方EntityId%_X! (
+      if %%a==!EntityInfo_%敌方EntityId%_Y! (
+        Set "IsWalk=True"
+      )
+    )
     if "!IsWalk!"=="True" (
-      if not defined Player_%%b_%%a (
-        Set /a XDis=%%b-!EntityInfo_%敌方EntityId%_X!
-        Set /a YDis=%%a-!EntityInfo_%敌方EntityId%_Y!
-        if !XDis! lss 0 (
-          Set /a XDis*=-1
-        )
-        if !YDis! lss 0 (
-          Set /a YDis*=-1
-        )
-        Set /a BlockDis=XDis+YDis
-        if !BlockDis! leq !敌方EntityId_移动距离! (
-          Set /a "DrawDecideSelectX=%%b*64"
-          Set /a "DrawDecideSelectY=%%a*64"
-          Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY! trans"
-        )
+      Set /a XDis=%%b-!EntityInfo_%敌方EntityId%_X!
+      Set /a YDis=%%a-!EntityInfo_%敌方EntityId%_Y!
+      if !XDis! lss 0 (
+        Set /a XDis*=-1
+      )
+      if !YDis! lss 0 (
+        Set /a YDis*=-1
+      )
+      Set /a BlockDis=XDis+YDis
+      if !BlockDis! leq !敌方EntityId_移动距离! (
+        Set /a "DrawDecideSelectX=%%b*64"
+        Set /a "DrawDecideSelectY=%%a*64"
+        Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY! trans"
       )
     )
   )
@@ -1618,12 +1630,14 @@ if not "!BFS_Next_Path_Y!"=="!EntityInfo_%敌方EntityId%_Y!" (
 )
 set "回合=敌方移动AI处理_BFS"
 Set "Player_!EntityInfo_%敌方EntityId%_X!_!EntityInfo_%敌方EntityId%_Y!="
+Set MoveSource_X=!EntityInfo_%敌方EntityId%_X!
+Set MoveSource_Y=!EntityInfo_%敌方EntityId%_Y!
 goto Main
 :敌方移动AI处理_BFS
 Set /a BFS_MoveTempX=!BFS_StackPath_X:~0,2!
 Set /a BFS_MoveTempY=!BFS_StackPath_Y:~0,2!
-Set /a XDis=!BFS_MoveTempX!-!EntityInfo_%敌方EntityId%_X!
-Set /a YDis=!BFS_MoveTempY!-!EntityInfo_%敌方EntityId%_Y!
+Set /a XDis=!BFS_MoveTempX!-!MoveSource_X!
+Set /a YDis=!BFS_MoveTempY!-!MoveSource_Y!
 if !XDis! lss 0 (
   Set /a XDis*=-1
 )
@@ -1763,10 +1777,12 @@ if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
 )
 Set EntityId_伤害=!EntityInfo_%敌方EntityId%_伤害!
 Set /a "EntityInfo_!被攻击单位EntityId!_血量-=!EntityId_伤害!"
-if !被攻击方防御! leq !EntityId_伤害! (
-  Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!被攻击方防御!-1"
-) else (
-  Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!被攻击方防御!"
+if not !EntityId_伤害! equ 0 (
+  if !被攻击方防御! lss !EntityId_伤害! (
+    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!被攻击方防御!"
+  ) else (
+    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!EntityId_伤害!-1"
+  )
 )
 Call :玩家死亡判断 !被攻击单位EntityId!
 if Not "!凉了吗!"=="凉了" (
