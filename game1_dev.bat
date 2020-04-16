@@ -650,7 +650,7 @@ if Not "!BufName!"=="Main" (
 ) else (
   Set "image=target cmd"
 )
-Title 生死时速 draw !BufName! !DrawMainX! !DrawMainY! 回合:!回合! 回合数:!回合数! 渲染次数:!渲染次数!
+Title 全境激斗 draw !BufName! !DrawMainX! !DrawMainY! 回合:!回合! 回合数:!回合数! 渲染次数:!渲染次数!
 if "%~2"=="trans" (
   Set "image=draw !BufName! !DrawMainX! !DrawMainY! trans"
 ) else (
