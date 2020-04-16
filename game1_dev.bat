@@ -140,7 +140,7 @@ Set "image=unload Space"
 Set "image=buffer Space"
 Set "image=stretch Space 64 64"
 Set "SelectType=select"
-Set "无法通行的方块ID=2,3,6,8,9,17,25,26"
+Set "无法通行的方块ID=2,3,6,8,9,17,25,26,27,28,29,30,31,32"
 Set SelectX=0
 Set SelectY=0
 setlocal
@@ -349,6 +349,12 @@ if "%block%" geq "18" (
 	if %block% leq "24" (
 		set 地形=道路
 		set 属性=可以通行
+	)
+)
+if "%block%" geq "27" (
+	if %block% leq "32" (
+		set 地形=城墙
+		set 属性=不可通行
 	)
 )
 if "%block%" geq "25" (
@@ -1512,7 +1518,7 @@ Set BFS_Next_Path_Y=!最近单位Y!
       Set /a BFS_Image_X=!BFS_X!*64
       Set /a BFS_Image_Y=!BFS_Y!*64
       set "image=target BFSCover"
-      set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y!"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y!"
       set "image=unload BFSCoverWithNewSize"
       set "image=buffer BFSCoverWithNewSize"
       set "image=stretch BFSCoverWithNewSize 960 704"
@@ -1525,7 +1531,7 @@ Set BFS_Next_Path_Y=!最近单位Y!
       Set /a BFS_Image_X=!BFS_X!*64
       Set /a BFS_Image_Y=!BFS_Y!*64+64
       set "image=target cmd"
-      set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y! trans"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y! trans"
     )
     if "!IsWalk!"=="True" (
       if not defined BFS_Dist_!BFS_Next_X!_!BFS_Next_Y! (
