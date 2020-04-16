@@ -111,21 +111,8 @@ if "!stagechoose:~0,1!"=="N" (
   )
 )
 cls
-Rem Patch By OldLiu
 if exist "分辨率压缩" (
   Set /p "自定义分辨率="<分辨率压缩
-  For /f "tokens=1,2 delims= " %%a in ("!自定义分辨率!") do (
-    Set /a New_Width=%%a
-    Set /a New_Height=%%b
-    Set /A Box_Width=64*New_Width/960+1
-    Set /A Box_Height=64*New_Height/704+1
-    Set "image=buffer ImageCover"
-    Set "image=target ImageCover"
-    Set "image=stretch ImageCover 64 64"
-    Set "image=draw Imgmoverange 0 0"
-    Set "image=resize ImageCover !Box_Width! !Box_Height!"
-
-  )
 )
 :LoadLevel
 Set "image=target cmd"
@@ -221,8 +208,8 @@ if Not "!Windows10!"=="True" (
   )
   Curs /pos 0 0
 )
-if exist "分辨率压缩" (
-  Set "image=resize Main %自定义分辨率%"
+if defined 自定义分辨率 (
+  Set "image=stretch Main 960 704"
 )
 Call :Show Map 0 0||Rem 显示地图到主渲染层
 Call :Show Player trans||Rem 显示单位到主渲染层
@@ -263,7 +250,7 @@ if "!回合!"=="单位移动" (
 Set /a "ShowSelectX=!SelectX!*64"
 Set /a "ShowSelectY=!SelectY!*64"
 Call :Show Img%SelectType% trans !ShowSelectX! !ShowSelectY!||Rem 显示选择区
-if exist "分辨率压缩" (
+if defined 自定义分辨率 (
   Set "image=stretch Main !自定义分辨率!"
 )
 Call :Show Main 0 64||Rem 加载主渲染层
@@ -1402,6 +1389,11 @@ Set /a DFS_MoveStep+=1
 Goto :Main
 :敌方移动开始_BFS
 Set BFS 1>var/BFS.env
+if defined 自定义分辨率 (
+  Set "image=unload BFSCover"
+  Set "image=buffer BFSCover"
+  Set "image=stretch BFSCover 960 704"
+)
 for /f "tokens=1 delims==" %%i in (var/BFS.env) do (
   Set "%%~i="
 )
@@ -1480,11 +1472,19 @@ Set BFS_Next_Path_Y=!最近单位Y!
     ) else (
       Set "IsWalk=False"
     )
-    if defined New_Width (
-      Set /a "BFS_Image_X=(!BFS_X!*64*New_Width)/960" || Rem Patch By OldLiu
-      Set /a "BFS_Image_Y=(!BFS_Y!*64*New_Height)/704+64"
+    if defined 自定义分辨率 (
+      Set /a BFS_Image_X=!BFS_X!*64
+      Set /a BFS_Image_Y=!BFS_Y!*64
+      set "image=target BFSCover"
+      set "image=draw Imgmoverange !BFS_Image_X! !BFS_Image_Y!"
+      set "image=unload BFSCoverWithNewSize"
+      set "image=buffer BFSCoverWithNewSize"
+      set "image=stretch BFSCoverWithNewSize 960 704"
+      set "image=target BFSCoverWithNewSize"
+      set "image=draw BFSCover 0 0"
+      set "image=stretch BFSCoverWithNewSize !自定义分辨率!"
       set "image=target cmd"
-      set "image=draw ImageCover !BFS_Image_X! !BFS_Image_Y!"
+      set "image=draw BFSCoverWithNewSize 0 64 trans"
   	) else (
       Set /a BFS_Image_X=!BFS_X!*64
       Set /a BFS_Image_Y=!BFS_Y!*64+64
