@@ -158,7 +158,7 @@ if Not "!自定关卡!"=="True" (
     pause>nul
   )
   if exist ./maps/%map%.env (
-    for /f "delims=" %%i in (./maps/%map%.env) do (
+    for /f "eol=# delims=" %%i in (./maps/%map%.env) do (
       Set "%%~i"
     )
   )
@@ -168,7 +168,7 @@ if Not "!自定关卡!"=="True" (
     pause>nul
   )
   if exist ./自定关卡/%自定关卡名%/%自定关卡名%.env (
-    for /f "delims=" %%i in (./自定关卡/%自定关卡名%/%自定关卡名%.env) do (
+    for /f "eol=# delims=" %%i in (./自定关卡/%自定关卡名%/%自定关卡名%.env) do (
       Set "%%~i"
     )
   )
