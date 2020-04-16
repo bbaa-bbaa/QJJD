@@ -3,7 +3,9 @@
 @echo off 2>nul 3>nul
 mode con cols=120 lines=48
 setlocal enabledelayedexpansion
-Set 寻路方式=BFS
+for /f "eol=# delims== Tokens=1-2" %%i in (Setting.env) do (
+  Set "%%i=%%j"
+)
 Set SettingDFS_DebugMode=1|| REM 1显示搜索过程0不显示
 if !SettingDFS_DebugMode!==1 (
   set SettingDFS_Mode=Main
@@ -83,13 +85,16 @@ cls
 Set image=draw cover 0 0
 Set /p map=<level.txt
 Set CustomIndex=1
+for /l %%i in (1,1,!map!) do (
+echo %%i.主线%%i
+)
 for /f %%i in ('dir /a:d /b 自定关卡') do (
   echo N!CustomIndex!.%%i
   Set CustomN!CustomIndex!=%%i
   Set /a CustomIndex+=1
 )
 
-Echo                                                请输入想游玩的关卡:
+Echo                                                请输入想游玩的关卡():
 set /p stagechoose=                                            Stage：
 if "!stagechoose:~0,1!"=="N" (
   if not defined Custom!stagechoose! (
@@ -1110,7 +1115,6 @@ if "!敌方选择完毕!"=="t" (
   Set /a "敌方EnityId_移动起始Y=!敌方单位Y!-!敌方EnityId_移动距离!"
   Set /a "敌方EnityId_移动结束X=!敌方单位X!+!敌方EnityId_移动距离!"
   Set /a "敌方EnityId_移动结束Y=!敌方单位Y!+!敌方EnityId_移动距离!"
-  
   Set /a "溜走血量=!NamePlayer_%敌方EnityId%_总血量!/3+1"
   if !NamePlayer_%敌方EnityId%_血量! leq !溜走血量! (
     if !敌方单位数量! geq 2 (
@@ -1421,7 +1425,9 @@ Set BFS_Next_Path_Y=!最近单位Y!
 :BFS_Main
   if !BFS_X!==!最近单位X! (
     if !BFS_Y!==!最近单位Y! (
-     REM Goto :BFS_Finish
+      if /i "!QuickBFS!"=="Enable" (
+        Goto :BFS_Finish
+      )
     )
   )
   if !BFS_Queue_Length! equ 0 (
@@ -1514,8 +1520,6 @@ Set BFS_Next_Path_Y=!最近单位Y!
 )
 :BFS_Finish
 if not defined BFS_Path_%最近单位X%_%最近单位Y%_X (
-  echo %最近单位X%_%最近单位Y%
-  pause
   Set "回合=敌方移动"
   Set "SelectType=select"
   Set Ban_!敌方EnityId!=true
