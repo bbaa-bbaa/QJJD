@@ -9,6 +9,7 @@ for /f "Tokens=1-2" %%i in ("%Size%") do (
 	Set X=%%i
 	Set Y=%%j
 )
+Set image=unload !ReturnName!
 Set image=buffer !ReturnName!
 Set image=stretch !ReturnName! !Size!
 Set image=buffer MirrorTmp
@@ -20,4 +21,5 @@ for /l %%i in (0,1,%X%) do (
 	Set image=target !ReturnName!
 	Set image=draw MirrorTmp %%i 0
 )
+Set image=unload MirrorTmp
 Goto :Eof
