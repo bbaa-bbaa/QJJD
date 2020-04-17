@@ -94,7 +94,7 @@ for /f %%i in ('dir /a:d /b 自定关卡') do (
   Set /a CustomIndex+=1
 )
 
-Echo                                                请输入想游玩的关卡():
+Echo                                                请输入想游玩的关卡:
 set /p stagechoose=                                            Stage：
 if "!stagechoose:~0,1!"=="N" (
   if not defined Custom!stagechoose! (
