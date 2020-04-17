@@ -1868,13 +1868,14 @@ for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
       if "!方块Id!"=="11" (
         if !EntityInfo_%%i_血量! lss !EntityInfo_%%i_总血量! (
          Set /a EntityInfo_%%i_血量+=1
+         Call :血量条重算 %%i
         )
       )
       if "!方块Id!"=="15" (
         Set /a EntityInfo_%%i_血量-=1
         Call :玩家死亡判断 %%i
+        Call :血量条重算 %%i
       )
-      Call :血量条重算 %%i
   ) else (
     Call :玩家死亡判断 %%i
     Call :血量条重算 %%i
