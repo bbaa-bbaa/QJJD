@@ -147,8 +147,8 @@ setlocal
 cls
 Set 渲染次数=0
 Set 回合数=1
-Set "回合=单位移动"
-Set EntityId=
+Set "回合=我方移动"
+Set 我方EntityId=
 Set 敌方EntityId=
 Set "PostiveAI=disable"
 title 关卡:!map! 按任意键继续
@@ -230,7 +230,7 @@ if defined 自定义分辨率 (
 Call :Show Map 0 0||Rem 显示地图到主渲染层
 Call :Show Player trans||Rem 显示单位到主渲染层
 Call :Show BufHealth trans
-if "!回合!"=="单位移动" (
+if "!回合!"=="我方移动" (
   Set "敌方EntityId="
   if /i "!SelectType!"=="decideselect" (
     Call :Show MoveSelect trans
@@ -392,7 +392,7 @@ if defined 绘制爆炸特效 (
 )
 If Not "!回合:~0,2!"=="敌方" (
   if Not "!回合:~0,3!"=="DFS" (
-    Goto :KeyDown
+    Goto :!回合!
   )
 ) else (
   if "!回合!"=="敌方移动" (
@@ -419,27 +419,27 @@ If "%SelectX%"=="!MoveSource_X!" (
     choice /c dq /n>nul 2>nul
     if errorlevel 2 (
       set "SelectType=select"
-      Set "回合=单位移动"
-      Set "EntityInfo_!EntityId!_X=!SelectX!"
-      Set "EntityInfo_!EntityId!_Y=!SelectY!"
-      Set "Player_!SelectX!_!SelectY!=!EntityId!"
+      Set "回合=我方移动"
+      Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+      Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
+      Set "Player_!SelectX!_!SelectY!=!我方EntityId!"
       Goto Main
     ) else (
       set "SelectType=select"
       Set "回合=单位攻击选择"
-      Set "EntityInfo_!EntityId!_X=!SelectX!"
-      Set "EntityInfo_!EntityId!_Y=!SelectY!"
-      Set "Player_!SelectX!_!SelectY!=!EntityId!"
+      Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+      Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
+      Set "Player_!SelectX!_!SelectY!=!我方EntityId!"
       Goto Main
     )
   )
 )  2>nul
 Set "SelectType=select"
-Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
-Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
-Set "EntityInfo_!EntityId!_X=!SelectX!"
-Set "EntityInfo_!EntityId!_Y=!SelectY!"
-Set "Player_!SelectX!_!SelectY!=!EntityId!"
+Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
+Set "Player_!SelectX!_!SelectY!=!我方EntityId!"
 Set "回合=单位攻击选择"
 Goto :Main
 :Main_MoveSelect
@@ -447,20 +447,20 @@ Set "image=unload MoveSelect"
 Set image=buffer MoveSelect||Rem 再建个buf 好处理
 Set image=stretch MoveSelect 960 704
 Set image=target MoveSelect
-Set "EntityId=!Player_%SelectX%_%SelectY%!"
-Set "EntityId_移动距离=!EntityInfo_%EntityId%_移动距离!"
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
+Set "EntityId_移动距离=!EntityInfo_%我方EntityId%_移动距离!"
 if "!MapList_%SelectX%_%SelectY%!"=="16" (
   Set /a EntityId_移动距离-=1
 ) 
-Set /a "EntityId_移动起始X=!SelectX!-!EntityId_移动距离!"
-Set /a "EntityId_移动起始Y=!SelectY!-!EntityId_移动距离!"
-Set /a "EntityId_移动结束X=!SelectX!+!EntityId_移动距离!"
-Set /a "EntityId_移动结束Y=!SelectY!+!EntityId_移动距离!"
-Set "MoveSource_X=!EntityInfo_%EntityId%_X!"
-Set "MoveSource_Y=!EntityInfo_%EntityId%_Y!"
-Set "Player_!EntityInfo_%EntityId%_X!_!EntityInfo_%EntityId%_Y!="
-for /l %%a in (%EntityId_移动起始Y%,1,%EntityId_移动结束Y%) do (
-  for /l %%b in (%EntityId_移动起始X%,1,%EntityId_移动结束X%) do (
+Set /a "EntityId_移动起始X=!SelectX!-!我方EntityId_移动距离!"
+Set /a "EntityId_移动起始Y=!SelectY!-!我方EntityId_移动距离!"
+Set /a "EntityId_移动结束X=!SelectX!+!我方EntityId_移动距离!"
+Set /a "EntityId_移动结束Y=!SelectY!+!我方EntityId_移动距离!"
+Set "MoveSource_X=!EntityInfo_%我方EntityId%_X!"
+Set "MoveSource_Y=!EntityInfo_%我方EntityId%_Y!"
+Set "Player_!EntityInfo_%我方EntityId%_X!_!EntityInfo_%我方EntityId%_Y!="
+for /l %%a in (%我方EntityId_移动起始Y%,1,%我方EntityId_移动结束Y%) do (
+  for /l %%b in (%我方EntityId_移动起始X%,1,%我方EntityId_移动结束X%) do (
     Set "IsWalk=True"
     for %%c in (%无法通行的方块ID%) do (
       if "!MapList_%%b_%%a!"=="%%c" (
@@ -478,7 +478,7 @@ for /l %%a in (%EntityId_移动起始Y%,1,%EntityId_移动结束Y%) do (
           Set /a YDis*=-1
         )
         Set /a BlockDis=XDis+YDis
-        if !BlockDis! leq !EntityId_移动距离! (
+        if !BlockDis! leq !我方EntityId_移动距离! (
           Set /a "DrawDecideSelectX=%%b*64"
           Set /a "DrawDecideSelectY=%%a*64"
           Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY! trans"
@@ -491,29 +491,29 @@ Set image=target cmd
 Goto :Main
 :Main_AttackSelect
 Rem TJU:完全照办bbaa移动代码的思路
-Set "EntityId=!Player_%SelectX%_%SelectY%!"
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
 Set "image=unload AttackSelect"
 Set image=buffer AttackSelect||Rem 再建个buf 好处理
 Set image=stretch AttackSelect 960 704
 Set image=target AttackSelect
-Set "EntityId=!Player_%SelectX%_%SelectY%!"
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
 If !MapList_%SelectX%_%SelectY%!==1 (
-  Set /a "EntityId_攻击距离=!EntityInfo_%EntityId%_攻击距离!+1"
+  Set /a "EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!+1"
 ) else if !MapList_%SelectX%_%SelectY%!==10 (
-  Set /a "EntityId_攻击距离=!EntityInfo_%EntityId%_攻击距离!+1"
+  Set /a "EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!+1"
 ) else (
-  Set "EntityId_攻击距离=!EntityInfo_%EntityId%_攻击距离!"
+  Set "EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!"
 )
 Set "EntityId_X=!SelectX!"
 Set "EntityId_X=!SelectY!"
-Set /a "EntityId_攻击起始X=!SelectX!-!EntityId_攻击距离!"
-Set /a "EntityId_攻击起始Y=!SelectY!-!EntityId_攻击距离!"
-Set /a "EntityId_攻击结束X=!SelectX!+!EntityId_攻击距离!"
-Set /a "EntityId_攻击结束Y=!SelectY!+!EntityId_攻击距离!"
-Set /a "EntityId_伤害=!EntityInfo_%EntityId%_伤害!"
+Set /a "EntityId_攻击起始X=!SelectX!-!我方EntityId_攻击距离!"
+Set /a "EntityId_攻击起始Y=!SelectY!-!我方EntityId_攻击距离!"
+Set /a "EntityId_攻击结束X=!SelectX!+!我方EntityId_攻击距离!"
+Set /a "EntityId_攻击结束Y=!SelectY!+!我方EntityId_攻击距离!"
+Set /a "EntityId_伤害=!EntityInfo_%我方EntityId%_伤害!"
 Set /a "可攻击单位数量=0"
-for /l %%a in (%EntityId_攻击起始Y%,1,%EntityId_攻击结束Y%) do (
-  for /l %%b in (%EntityId_攻击起始X%,1,%EntityId_攻击结束X%) do (
+for /l %%a in (%我方EntityId_攻击起始Y%,1,%我方EntityId_攻击结束Y%) do (
+  for /l %%b in (%我方EntityId_攻击起始X%,1,%我方EntityId_攻击结束X%) do (
     if defined Player_%%b_%%a (
       Call :Get_Ver TmpEntityId Player_%%b_%%a
       Call :Get_Ver TmpEntityId EntityInfo_!TmpEntityId!_阵营
@@ -678,16 +678,16 @@ if !errorlevel!==1 (
   Rem Up
   if !SelectY! geq 1 (
     Set /a "SelectY-=1"
-    if /i "!回合!"=="单位移动" (
+    if /i "!回合!"=="我方移动" (
       if "!SelectType!"=="decideselect" (
         Call :IsWalk
         if "!IsWalk!"=="False" (
           Set /a "SelectY+=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
-          Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
-          Set "EntityInfo_!EntityId!_X=!SelectX!"
-          Set "EntityInfo_!EntityId!_Y=!SelectY!"
+          Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+          Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+          Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+          Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
         )
       )
     ) else (
@@ -706,16 +706,16 @@ Rem 如果是选择单位模式
   if !SelectY! lss !MapSizeY! (
     Set /a "SelectY+=1"
     Rem 如果是移动模式
-    if /i "!回合!"=="单位移动" (
+    if /i "!回合!"=="我方移动" (
       if "!SelectType!"=="decideselect" (
         Call :IsWalk
         if "!IsWalk!"=="False" (
           Set /a "SelectY-=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
-          Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
-          Set "EntityInfo_!EntityId!_X=!SelectX!"
-          Set "EntityInfo_!EntityId!_Y=!SelectY!"
+          Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+          Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+          Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+          Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
         )
       )
     ) else (
@@ -733,16 +733,16 @@ if  !errorlevel!==3 (
   Rem Left
   if !SelectX! gtr 0 (
     Set /a "SelectX-=1"
-    if /i "!回合!"=="单位移动" (
+    if /i "!回合!"=="我方移动" (
       if "!SelectType!"=="decideselect" (
         Call :IsWalk
         if "!IsWalk!"=="False" (
           Set /a "SelectX+=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
-          Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
-          Set "EntityInfo_!EntityId!_X=!SelectX!"
-          Set "EntityInfo_!EntityId!_Y=!SelectY!"
+          Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+          Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+          Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+          Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
         )
       )
     ) else (
@@ -759,16 +759,16 @@ if !errorlevel!==4 (
   Rem Right
   if !SelectX! lss !MapSizeX! (
     Set /a "SelectX+=1"
-    if /i "!回合!"=="单位移动" (
+    if /i "!回合!"=="我方移动" (
       if "!SelectType!"=="decideselect" (
         Call :IsWalk
         if "!IsWalk!"=="False" (
           Set /a "SelectX-=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
-          Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
-          Set "EntityInfo_!EntityId!_X=!SelectX!"
-          Set "EntityInfo_!EntityId!_Y=!SelectY!"
+          Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+          Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+          Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+          Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
         )
       )
     ) else (
@@ -795,7 +795,7 @@ if !errorlevel!==5 (
       Set "MoreText=!MoreText!你没有选择单位"
     )
   ) else (
-    if "!回合!"=="单位移动" (
+    if "!回合!"=="我方移动" (
       Call :IsWalk
       if "!IsWalk!"=="True" (
         Goto :Main_MoveA
@@ -807,10 +807,10 @@ if !errorlevel!==5 (
       if "!EntityInfo_%SPlayer_Id%_阵营!"=="敌方" (
         Set "SelectType=select"
         Set "回合=敌方移动"
-        Set /a "EntityId_伤害=!EntityInfo_%EntityId%_伤害!"
-        Set /a "EntityId_X=!EntityInfo_%EntityId%_X!"
-        Set "EntityId=!Player_%SelectX%_%SelectY%!"
-        Call :Get_Ver 被攻击方防御 EntityInfo_!EntityId!_防御
+        Set /a "EntityId_伤害=!EntityInfo_%我方EntityId%_伤害!"
+        Set /a "EntityId_X=!EntityInfo_%我方EntityId%_X!"
+        Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
+        Call :Get_Ver 被攻击方防御 EntityInfo_!我方EntityId!_防御
         Set "被攻击方X=%SelectX%"
         Set "被攻击方Y=%SelectY%"
         Call :Get_Ver 被攻击方脚下方块 MapList_!被攻击方X!_!被攻击方Y!
@@ -824,22 +824,22 @@ if !errorlevel!==5 (
             Goto :Main
           )
         ) 
-        Set /a "EntityInfo_!EntityId!_血量-=!EntityId_伤害!"
-        if not !EntityId_伤害! equ 0 (
-          if !被攻击方防御! lss !EntityId_伤害! (
-            Set /a "EntityInfo_!EntityId!_血量+=!被攻击方防御!"
+        Set /a "EntityInfo_!我方EntityId!_血量-=!我方EntityId_伤害!"
+        if not !我方EntityId_伤害! equ 0 (
+          if !被攻击方防御! lss !我方EntityId_伤害! (
+            Set /a "EntityInfo_!我方EntityId!_血量+=!被攻击方防御!"
           ) else (
-              Set /a "EntityInfo_!EntityId!_血量+=!EntityId_伤害!-1"
+              Set /a "EntityInfo_!我方EntityId!_血量+=!我方EntityId_伤害!-1"
           )
         )
-        Call :玩家死亡判断 !EntityId!
+        Call :玩家死亡判断 !我方EntityId!
         if Not "!凉了吗!"=="凉了" (
-          Call :血量条重算 !EntityId!
-          Set "被攻击的敌方单位EntityId=!EntityId!"
+          Call :血量条重算 !我方EntityId!
+          Set "被攻击的敌方单位EntityId=!我方EntityId!"
         )
         Set 绘制爆炸特效=true
       ) else (
-        if "!EntityInfo_%EntityId%_X!"=="!SelectX!" if "!EntityInfo_%EntityId%_Y!"=="!SelectY!" (
+        if "!EntityInfo_%我方EntityId%_X!"=="!SelectX!" if "!EntityInfo_%我方EntityId%_Y!"=="!SelectY!" (
           Set "SelectType=select"
           Set "回合=敌方移动"
           Goto :Main
@@ -869,7 +869,7 @@ if !YDis! lss 0 (
   Set /a YDis*=-1
 )
 Set /a BlockDis=XDis+YDis
-if !BlockDis! gtr !EntityId_移动距离! (
+if !BlockDis! gtr !我方EntityId_移动距离! (
   Set "IsWalk=False"
 )
 for %%a in (%无法通行的方块ID%) do (
@@ -880,24 +880,24 @@ for %%a in (%无法通行的方块ID%) do (
 if defined Player_!SelectX!_!SelectY! (
     Set "IsWalk=False"
 )
-if "!SelectX!"=="!EntityInfo_%EntityId%_X!" (
-  if "!SelectY!"=="!EntityInfo_%EntityId%_Y!" (
+if "!SelectX!"=="!EntityInfo_%我方EntityId%_X!" (
+  if "!SelectY!"=="!EntityInfo_%我方EntityId%_Y!" (
     Set "IsWalk=True"
   )
 )
 Goto :eof
 :IsAttackMove
 Set "IsAttackMove=True"
-if !SelectX! lss !EntityId_攻击起始X! (
+if !SelectX! lss !我方EntityId_攻击起始X! (
   Set "IsAttackMove=False"
 )
-if !SelectX! gtr !EntityId_攻击结束X! (
+if !SelectX! gtr !我方EntityId_攻击结束X! (
   Set "IsAttackMove=False"
 )
-if !SelectY! lss !EntityId_攻击起始Y! (
+if !SelectY! lss !我方EntityId_攻击起始Y! (
   Set "IsAttackMove=False"
 )
-if !SelectY! gtr !EntityId_攻击结束Y! (
+if !SelectY! gtr !我方EntityId_攻击结束Y! (
   Set "IsAttackMove=False"
 )
 Goto :Eof
@@ -1141,6 +1141,55 @@ for /f "Tokens=2 delims==" %%i in (var/敌方单位.env) do (
   )
 )
 Goto :Eof
+:寻找选择最有价值的我方单位A
+Set /a 历史价值=-100000
+Set 我方单位_ 1>var/我方单位.env
+Set 敌方单位_ 1>var/敌方单位.env
+if defined 单位Index回合数 (
+  if !单位Index回合数!==!回合数! (
+    for /l %%i in (1,1,!单位Index!) do (
+      if not defined Ban_!单位选择数据_%%i_我方! (
+        if !单位选择数据_%%i_价值! gtr !历史价值! (
+          Set 最近的敌方单位Id=!单位选择数据_%%i_敌方!
+          Set /a 最近单位X=EntityInfo_!单位选择数据_%%i_敌方!_X
+          Set /a 最近单位Y=EntityInfo_!单位选择数据_%%i_敌方!_Y
+          set /a 我方EntityId=!单位选择数据_%%i_我方!
+          set 历史价值=!单位选择数据_%%i_价值!
+        )
+      )
+    )
+    Goto :eof
+  )
+)
+Set /a 单位Index=0
+Set /a 单位Index回合数=!回合数!
+for /f "Tokens=2 delims==" %%i in (var/我方单位.env) do (
+  for /f "Tokens=2 delims==" %%j in (var/敌方单位.env) do (
+    if not defined Ban_%%i (
+      if defined EntityInfo_%%j_血量 (
+        if defined EntityInfo_%%i_血量 (
+      Set "距离公式=sqrt((!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)*(!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)+(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!)*(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!))"
+      calc "!距离公式!" 1>var/距离.calcresult
+      Set /p 距离=<var/距离.calcresult
+      set "价值公式=floor((((8/!距离!)+4/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*(!EntityInfo_%%i_血量!))*10000)"
+      calc "!价值公式!" 1>var/价值.calcresult
+      Set /p 价值=<var/价值.calcresult
+      Set /a 单位Index+=1
+      Set 单位选择数据_!单位Index!_敌方=%%j
+      Set 单位选择数据_!单位Index!_我方=%%i
+      Set 单位选择数据_!单位Index!_价值=!价值!
+      if !价值! gtr !历史价值! (
+        Set 最近的敌方单位Id=%%j
+        Set 最近单位X=!EntityInfo_%%j_X!
+        Set 最近单位Y=!EntityInfo_%%j_Y!
+        set /a 我方EntityId=%%i
+        set 历史价值=!价值!
+      ))
+      )
+    )
+  )
+)
+Goto :Eof
 :寻找选择最有价值的我方单位
 Set /a 历史价值=-100000
 Set 需要判断的敌方单位=%1
@@ -1156,6 +1205,29 @@ for /f %%i in ("!需要判断的敌方单位!") do (
       Set /p 价值=<var/价值.calcresult
       if !价值! gtr !历史价值! (
         Set 最近的我方单位Id=%%j
+        Set 最近单位X=!EntityInfo_%%j_X!
+        Set 最近单位Y=!EntityInfo_%%j_Y!
+        set 历史价值=!价值!
+      )
+    )
+  )
+)
+Goto :Eof
+:寻找选择最有价值的敌方单位A
+Set /a 历史价值=-100000
+Set 需要判断的我方单位=%1
+Set 敌方单位_ 1>var/敌方单位.env
+for /f %%i in ("!需要判断的我方单位!") do (
+  for /f "Tokens=2 delims==" %%j in (var/敌方单位.env) do (
+    if not defined Ban_%%i (
+      Set "距离公式=sqrt((!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)*(!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)+(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!)*(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!))"
+      calc "!距离公式!" 1>var/距离.calcresult
+      Set /p 距离=<var/距离.calcresult
+      set "价值公式=floor((((8/!距离!)+4/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*(!EntityInfo_%%i_血量!))*10000)"
+      calc "!价值公式!" 1>var/价值.calcresult
+      Set /p 价值=<var/价值.calcresult
+      if !价值! gtr !历史价值! (
+        Set 最近的敌方单位Id=%%j
         Set 最近单位X=!EntityInfo_%%j_X!
         Set 最近单位Y=!EntityInfo_%%j_Y!
         set 历史价值=!价值!
@@ -1185,7 +1257,7 @@ If Not Defined 敌方EntityId (
   )
   if !最近的我方单位Id!==-1 (
     Set "SelectType=select"
-    Set "回合=单位移动"
+    Set "回合=我方移动"
     Call :回合结束处理
     Set "敌方EntityId="
     Goto :Main
@@ -1193,6 +1265,8 @@ If Not Defined 敌方EntityId (
   Set "敌方选择完毕=t"
 )
 if "!敌方选择完毕!"=="t" (
+  echo %敌方EntityId%
+  pause
   Set "敌方单位X=!EntityInfo_%敌方EntityId%_X!"
   Set "敌方单位Y=!EntityInfo_%敌方EntityId%_Y!"
   Set "敌方EntityId_移动距离=!EntityInfo_%敌方EntityId%_移动距离!"
@@ -1242,6 +1316,8 @@ if defined 敌方EntityId (
 )
 Goto :Main
 :敌方移动_处理
+echo !敌方单位X!
+pause
 if Not "!SelectX!"=="!敌方单位X!" (
   if !SelectX! gtr !敌方单位X! (
     Set /a "SelectX-=1"
@@ -1265,13 +1341,13 @@ if "!SelectX!"=="!敌方单位X!" (
   )
 )
 Goto :Eof
-:敌方移动区域渲染
+:我方移动区域渲染
 Set "image=unload MoveSelect"
 Set image=buffer MoveSelect||Rem 再建个buf 好处理
 Set image=stretch MoveSelect 960 704
 Set image=target MoveSelect
-for /l %%a in (%敌方EntityId_移动起始Y%,1,%敌方EntityId_移动结束Y%) do (
-  for /l %%b in (%敌方EntityId_移动起始X%,1,%敌方EntityId_移动结束X%) do (
+for /l %%a in (%我方EntityId_移动起始Y%,1,%我方EntityId_移动结束Y%) do (
+  for /l %%b in (%我方EntityId_移动起始X%,1,%我方EntityId_移动结束X%) do (
     Set "IsWalk=True"
     for %%c in (%无法通行的方块ID%) do (
       if "!MapList_%%b_%%a!"=="%%c" (
@@ -1281,14 +1357,14 @@ for /l %%a in (%敌方EntityId_移动起始Y%,1,%敌方EntityId_移动结束Y%) do (
     if defined Player_%%b_%%a (
       Set "IsWalk=False"
     )
-    if %%b==!EntityInfo_%敌方EntityId%_X! (
-      if %%a==!EntityInfo_%敌方EntityId%_Y! (
+    if %%b==!EntityInfo_%我方EntityId%_X! (
+      if %%a==!EntityInfo_%我方EntityId%_Y! (
         Set "IsWalk=True"
       )
     )
     if "!IsWalk!"=="True" (
-      Set /a XDis=%%b-!EntityInfo_%敌方EntityId%_X!
-      Set /a YDis=%%a-!EntityInfo_%敌方EntityId%_Y!
+      Set /a XDis=%%b-!EntityInfo_%我方EntityId%_X!
+      Set /a YDis=%%a-!EntityInfo_%我方EntityId%_Y!
       if !XDis! lss 0 (
         Set /a XDis*=-1
       )
@@ -1296,7 +1372,148 @@ for /l %%a in (%敌方EntityId_移动起始Y%,1,%敌方EntityId_移动结束Y%) do (
         Set /a YDis*=-1
       )
       Set /a BlockDis=XDis+YDis
-      if !BlockDis! leq !敌方EntityId_移动距离! (
+      if !BlockDis! leq !我方EntityId_移动距离! (
+        Set /a "DrawDecideSelectX=%%b*64"
+        Set /a "DrawDecideSelectY=%%a*64"
+        Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY! trans"
+      )
+    )
+  )
+) 2>nul
+Goto :Eof
+:我方移动
+If Not Defined 我方EntityId (
+  Set 最近的敌方单位Id=-1
+  if Defined 被攻击的我方单位EntityId (
+    if defined EntityInfo_!被攻击的我方单位EntityId!_血量 (
+      if !EntityInfo_%被攻击的我方单位EntityId%_血量! gtr 0 (
+        ::追击设定
+        Call :寻找选择最有价值的敌方单位A !被攻击的我方单位EntityId!
+        Set /a "我方EntityId=!被攻击的我方单位EntityId!"
+        Set "被攻击的我方单位EntityId="
+      ) else (
+        Call :寻找选择最有价值的我方单位A
+      )
+    ) else (
+      Call :寻找选择最有价值的我方单位A
+    )
+  ) else (
+    Call :寻找选择最有价值的我方单位A
+  )
+  if !最近的敌方单位Id!==-1 (
+    Set "SelectType=select"
+    Set "回合=我方移动"
+    Call :回合结束处理
+    Set "我方EntityId="
+    Goto :Main
+  )
+  Set "我方选择完毕=t"
+)
+if "!我方选择完毕!"=="t" (
+  Set "我方单位X=!EntityInfo_%我方EntityId%_X!"
+  Set "我方单位Y=!EntityInfo_%我方EntityId%_Y!"
+  Set "我方EntityId_移动距离=!EntityInfo_%我方EntityId%_移动距离!"
+  if "!MapList_%SelectX%_%SelectY%!"=="16" (
+    Set /a 我方EntityId_移动距离-=1
+  ) 
+  Set /a "我方EntityId_移动起始X=!我方单位X!-!我方EntityId_移动距离!"
+  Set /a "我方EntityId_移动起始Y=!我方单位Y!-!我方EntityId_移动距离!"
+  Set /a "我方EntityId_移动结束X=!我方单位X!+!我方EntityId_移动距离!"
+  Set /a "我方EntityId_移动结束Y=!我方单位Y!+!我方EntityId_移动距离!"
+  Set /a "溜走血量=!EntityInfo_%我方EntityId%_总血量!/3+1"
+  if !EntityInfo_%我方EntityId%_血量! leq !溜走血量! (
+    if !我方单位数量! geq 2 (
+      if not "!PostiveAI!"=="Enable" (
+        Set TempXY=
+        Set TempX=
+        Set TempY=
+        Set 离得最近的XY积=100000
+        Set 是否替换=
+        Set 我方单位_ 1>var/我方单位.env
+        for /f "Tokens=1-2 delims==" %%i in (var/我方单位.env) do (
+          if not %%j==!我方EntityId! (
+            Set /a "TempX=!EntityInfo_%%j_X!-!我方单位X!"
+            Set /a "TempY=!EntityInfo_%%j_Y!-!我方单位Y!"
+            Set /a "TempXY=!TempX!*!TempX!+!TempY!*!TempY!"
+            if !TempXY! lss !离得最近的XY积! (
+              Set 离得最近的XY积=!TempXY!
+              Set 最近单位X=!EntityInfo_%%j_X!
+              Set 最近单位Y=!EntityInfo_%%j_Y!
+            ) else if !TempXY!==!离得最近的XY积! (
+              Set /a "是否替换=!random! %% 2"
+              if !是否替换!==1 (
+                Set 离得最近的XY积=!TempXY!
+                Set 最近单位X=!EntityInfo_%%j_X!
+                Set 最近单位Y=!EntityInfo_%%j_Y!
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+if defined 我方EntityId (
+  Set "我方选择完毕=f"
+  Call :我方移动_处理
+)
+Goto :Main
+:我方移动_处理
+if Not "!SelectX!"=="!我方单位X!" (
+  if !SelectX! gtr !我方单位X! (
+    Set /a "SelectX-=1"
+  ) else (
+    Set /a "SelectX+=1"
+  )
+) else (
+  if Not "!SelectY!"=="!我方单位Y!" (
+    if !SelectY! gtr !我方单位Y! (
+      Set /a "SelectY-=1"
+    ) else (
+      Set /a "SelectY+=1"
+    )
+  )
+)
+if "!SelectX!"=="!我方单位X!" (
+  if "!SelectY!"=="!我方单位Y!" (
+    Set "SelectType=decideselect"
+    Set 回合=我方移动开始_!寻路方式!
+    Call :我方移动区域渲染
+  )
+)
+Goto :Eof
+:我方移动区域渲染
+Set "image=unload MoveSelect"
+Set image=buffer MoveSelect||Rem 再建个buf 好处理
+Set image=stretch MoveSelect 960 704
+Set image=target MoveSelect
+for /l %%a in (%我方EntityId_移动起始Y%,1,%我方EntityId_移动结束Y%) do (
+  for /l %%b in (%我方EntityId_移动起始X%,1,%我方EntityId_移动结束X%) do (
+    Set "IsWalk=True"
+    for %%c in (%无法通行的方块ID%) do (
+      if "!MapList_%%b_%%a!"=="%%c" (
+        Set "IsWalk=False"
+      )
+    )
+    if defined Player_%%b_%%a (
+      Set "IsWalk=False"
+    )
+    if %%b==!EntityInfo_%我方EntityId%_X! (
+      if %%a==!EntityInfo_%我方EntityId%_Y! (
+        Set "IsWalk=True"
+      )
+    )
+    if "!IsWalk!"=="True" (
+      Set /a XDis=%%b-!EntityInfo_%我方EntityId%_X!
+      Set /a YDis=%%a-!EntityInfo_%我方EntityId%_Y!
+      if !XDis! lss 0 (
+        Set /a XDis*=-1
+      )
+      if !YDis! lss 0 (
+        Set /a YDis*=-1
+      )
+      Set /a BlockDis=XDis+YDis
+      if !BlockDis! leq !我方EntityId_移动距离! (
         Set /a "DrawDecideSelectX=%%b*64"
         Set /a "DrawDecideSelectY=%%a*64"
         Set "image=draw Imgmoverange !DrawDecideSelectX! !DrawDecideSelectY! trans"
@@ -1690,6 +1907,203 @@ if not Defined BFS_StackPath_Y (
   Goto :Main
 )
 Goto :Main
+:我方移动开始_BFS
+Set BFS 1>var/BFS.env
+if defined 自定义分辨率 (
+  Set "image=unload BFSCover"
+  Set "image=buffer BFSCover"
+  Set "image=stretch BFSCover 960 704"
+)
+for /f "tokens=1 delims==" %%i in (var/BFS.env) do (
+  Set "%%~i="
+)
+if !我方EntityId_移动距离!==0 (
+  Set "回合=我方移动选定"
+  Goto :Main
+)
+Rem 初始化方向顺序
+Set "BFSMoveX=+0-1+0+1" || REM 上左下右
+Set "BFSMoveY=-1+0+1+0"
+Rem 初始化起始顶点
+if %SelectX% lss 10 (
+  Set "BFS_Queue_X=+%SelectX%"
+) else (
+  Set "BFS_Queue_X=%SelectX%"
+)
+if %SelectY% lss 10 (
+  Set "BFS_Queue_Y=+%SelectY%"
+) else (
+  Set "BFS_Queue_Y=%SelectY%"
+)
+Set /a BFS_Queue_Length=1
+Set BFS_Dist_%SelectX%_%SelectY%=t
+Set "BFS_StackPath_X="
+Set "BFS_StackPath_Y="
+Set BFS_Next_Path_X=!最近单位X!
+Set BFS_Next_Path_Y=!最近单位Y!
+(
+:BFS_Main我方
+  if !BFS_X!==!最近单位X! (
+    if !BFS_Y!==!最近单位Y! (
+      if /i "!QuickBFS!"=="Enable" (
+        Goto :BFS_Finish_我方
+      )
+    )
+  )
+  if !BFS_Queue_Length! equ 0 (
+    Goto :BFS_Finish_我方
+  )
+  Set /a BFS_X=!BFS_Queue_X:~0,2!|| Rem 取出队列 
+  Set /a BFS_Y=!BFS_Queue_Y:~0,2!
+  Set "BFS_Queue_X=!BFS_Queue_X:~2!"
+  Set "BFS_Queue_Y=!BFS_Queue_Y:~2!"
+  Set /a BFS_Queue_Length-=1
+  for /l %%b in (0,2,6) do (
+    Set /a BFS_Next_X=!BFS_X!!BFSMoveX:~%%b,2!
+    Set /a BFS_Next_Y=!BFS_Y!!BFSMoveY:~%%b,2!
+    Set "IsWalk=True"
+    if !BFS_Next_X! GEQ 0 (
+      if !BFS_Next_Y! GEQ 0 (
+        if !BFS_Next_X! Lss 15 (
+          if !BFS_Next_Y! Lss 11 (
+            for %%c in (%无法通行的方块ID%) do (
+              for /f "delims=, tokens=1-2" %%d in ("!BFS_Next_X!,!BFS_Next_Y!") do (
+                if "!MapList_%%d_%%e!"=="%%c" (
+                  Set "IsWalk=False"
+                )
+              )
+            )
+            if defined Player_!BFS_Next_X!_!BFS_Next_Y! (
+                Set "IsWalk=False"
+            )
+            if "!BFS_Next_X!"=="!EntityInfo_%我方EntityId%_X!" (
+              if "!BFS_Next_Y!"=="!EntityInfo_%我方EntityId%_Y!" (
+                Set "IsWalk=True"
+              )
+            )
+            if "!BFS_Next_X!"=="!最近单位X!" (
+              if "!BFS_Next_Y!"=="!最近单位Y!" (
+                Set "IsWalk=True"
+              )
+            )
+          ) else (
+            Set "IsWalk=False"
+          )
+        ) else (
+          Set "IsWalk=False"
+        )
+      ) else (
+        Set "IsWalk=False"
+      )
+    ) else (
+      Set "IsWalk=False"
+    )
+    if defined 自定义分辨率 (
+      Set /a BFS_Image_X=!BFS_X!*64
+      Set /a BFS_Image_Y=!BFS_Y!*64
+      set "image=target BFSCover"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y!"
+      set "image=unload BFSCoverWithNewSize"
+      set "image=buffer BFSCoverWithNewSize"
+      set "image=stretch BFSCoverWithNewSize 960 704"
+      set "image=target BFSCoverWithNewSize"
+      set "image=draw BFSCover 0 0"
+      set "image=stretch BFSCoverWithNewSize !自定义分辨率!"
+      set "image=target cmd"
+      set "image=draw BFSCoverWithNewSize 0 64 trans"
+  	) else (
+      Set /a BFS_Image_X=!BFS_X!*64
+      Set /a BFS_Image_Y=!BFS_Y!*64+64
+      set "image=target cmd"
+      set "image=draw Imgsearchrange !BFS_Image_X! !BFS_Image_Y! trans"
+    )
+    if "!IsWalk!"=="True" (
+      if not defined BFS_Dist_!BFS_Next_X!_!BFS_Next_Y! (
+        Set "BFS_Dist_!BFS_Next_X!_!BFS_Next_Y!=t"
+        Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_X=!BFS_X!
+        Set BFS_Path_!BFS_Next_X!_!BFS_Next_Y!_Y=!BFS_Y!
+        if !BFS_Next_X! lss 10 (
+          Set "BFS_Queue_X=!BFS_Queue_X!+!BFS_Next_X!"
+        ) else (
+          Set "BFS_Queue_X=!BFS_Queue_X!!BFS_Next_X!"
+        )
+        if !BFS_Next_Y! lss 10 (
+          Set "BFS_Queue_Y=!BFS_Queue_Y!+!BFS_Next_Y!"
+        ) else (
+          Set "BFS_Queue_Y=!BFS_Queue_Y!!BFS_Next_Y!"
+        )
+        Set /a BFS_Queue_Length+=1
+      )
+    )
+  )
+  goto :BFS_Main我方
+)
+:BFS_Finish_我方
+if not defined BFS_Path_%最近单位X%_%最近单位Y%_X (
+  Set "回合=我方移动"
+  Set "SelectType=select"
+  Set Ban_!我方EntityId!=true
+  Set "我方EntityId="
+  goto :Main
+)
+if !BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X! lss 10 (
+  Set "BFS_StackPath_X=+!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!!BFS_StackPath_X!"
+) else (
+  Set "BFS_StackPath_X=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!!BFS_StackPath_X!"
+)
+if !BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y! lss 10 (
+  Set "BFS_StackPath_Y=+!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!!BFS_StackPath_Y!"
+) else (
+  Set "BFS_StackPath_Y=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!!BFS_StackPath_Y!"
+)
+(
+  Set BFS_Next_Path_X=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_X!
+  Set BFS_Next_Path_Y=!BFS_Path_%BFS_Next_Path_X%_%BFS_Next_Path_Y%_Y!
+)
+if not "!BFS_Next_Path_X!"=="!EntityInfo_%我方EntityId%_X!" (
+  goto :BFS_Finish_我方
+)
+if not "!BFS_Next_Path_Y!"=="!EntityInfo_%我方EntityId%_Y!" (
+  goto :BFS_Finish_我方
+)
+set "回合=我方移动AI处理_BFS"
+Set "Player_!EntityInfo_%我方EntityId%_X!_!EntityInfo_%我方EntityId%_Y!="
+Set MoveSource_X=!EntityInfo_%我方EntityId%_X!
+Set MoveSource_Y=!EntityInfo_%我方EntityId%_Y!
+goto Main
+:我方移动AI处理_BFS
+Set /a BFS_MoveTempX=!BFS_StackPath_X:~0,2!
+Set /a BFS_MoveTempY=!BFS_StackPath_Y:~0,2!
+Set /a XDis=!BFS_MoveTempX!-!MoveSource_X!
+Set /a YDis=!BFS_MoveTempY!-!MoveSource_Y!
+if !XDis! lss 0 (
+  Set /a XDis*=-1
+)
+if !YDis! lss 0 (
+  Set /a YDis*=-1
+)
+Set /a BlockDis=XDis+YDis
+if !BlockDis! gtr !我方EntityId_移动距离! (
+  Set "回合=我方移动选定"
+  Goto :Main
+)
+Set /a SelectX=!BFS_MoveTempX!
+Set /a SelectY=!BFS_MoveTempY!
+Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+Set "EntityInfo_%我方EntityId%_X=!SelectX!"
+Set "EntityInfo_%我方EntityId%_Y=!SelectY!"
+Set "BFS_StackPath_X=!BFS_StackPath_X:~2!"
+Set "BFS_StackPath_Y=!BFS_StackPath_Y:~2!"
+if not Defined BFS_StackPath_X (
+  Set "回合=我方移动选定"
+  Goto :Main
+)
+if not Defined BFS_StackPath_Y (
+  Set "回合=我方移动选定"
+  Goto :Main
+)
+Goto :Main
 :敌方移动选定
 Set "SelectType=select"
 Call :单位移动 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY! %敌方EntityId%
@@ -1755,7 +2169,7 @@ if !可攻击单位数量!==0 (
     goto :Main
   )
   set "SelectType=select"
-  Set "回合=单位移动"
+  Set "回合=我方移动"
   Call :回合结束处理
   Set "敌方EntityId="
 ) else (
@@ -1789,7 +2203,7 @@ if "!SelectX!"=="!被攻击单位X!" (
 )
 Goto :Main
 :敌方攻击_造成伤害
-Set "EntityId=!Player_%SelectX%_%SelectY%!"
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
 if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
   Set /a 被攻击方防御=!EntityInfo_%被攻击单位EntityId%_防御!+1
 ) else if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="13" (
@@ -1798,7 +2212,7 @@ if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
   set 是否闪避=!random!%%4
   if !是否闪避!==0 (
     set "SelectType=select"
-    Set "回合=单位移动"
+    Set "回合=我方移动"
     Call :回合结束处理
     Set "敌方EntityId="
     Goto :Main
@@ -1807,12 +2221,12 @@ if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
   Set /a 被攻击方防御=!EntityInfo_%被攻击单位EntityId%_防御!
 )
 Set EntityId_伤害=!EntityInfo_%敌方EntityId%_伤害!
-Set /a "EntityInfo_!被攻击单位EntityId!_血量-=!EntityId_伤害!"
-if not !EntityId_伤害! equ 0 (
-  if !被攻击方防御! lss !EntityId_伤害! (
+Set /a "EntityInfo_!被攻击单位EntityId!_血量-=!我方EntityId_伤害!"
+if not !我方EntityId_伤害! equ 0 (
+  if !被攻击方防御! lss !我方EntityId_伤害! (
     Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!被攻击方防御!"
   ) else (
-    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!EntityId_伤害!-1"
+    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!我方EntityId_伤害!-1"
   )
 )
 Call :玩家死亡判断 !被攻击单位EntityId!
@@ -1820,9 +2234,141 @@ if Not "!凉了吗!"=="凉了" (
   Call :血量条重算 !被攻击单位EntityId!
 )
 set "SelectType=select"
-Set "回合=单位移动"
+Set "回合=我方移动"
 Call :回合结束处理
 Set "敌方EntityId="
+Set 绘制爆炸特效=true
+Goto :Main
+:我方移动选定
+Set "SelectType=select"
+Call :单位移动 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! %我方EntityId%
+Call :移动血量条 !EntityInfo_%我方EntityId%_X! !EntityInfo_%我方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%我方EntityId%_类型!
+Set "EntityInfo_!我方EntityId!_X=!SelectX!"
+Set "EntityInfo_!我方EntityId!_Y=!SelectY!"
+Set "Player_!SelectX!_!SelectY!=!我方EntityId!"
+Set "回合=我方攻击选择"
+Goto :Main
+:我方攻击选择
+Set "image=unload AttackSelect"
+Set image=buffer AttackSelect||Rem 再建个buf 好处理
+Set image=stretch AttackSelect 960 704
+Set image=target AttackSelect
+Set "SelectType=decideselect"
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
+If !MapList_%SelectX%_%SelectY%!==1 (
+  Set /a "我方EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!+1"
+) else if "!MapList_%SelectX%_%SelectY%!"=="10" (
+  Set /a "我方EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!+1"
+) else if !MapList_%SelectX%_%SelectY%!==10 (
+  Set /a "我方EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!+1"
+) else (
+  Set "我方EntityId_攻击距离=!EntityInfo_%我方EntityId%_攻击距离!"
+)
+Set /a "我方EntityId_攻击起始X=!SelectX!-!我方EntityId_攻击距离!"
+Set /a "我方EntityId_攻击起始Y=!SelectY!-!我方EntityId_攻击距离!"
+Set /a "我方EntityId_攻击结束X=!SelectX!+!我方EntityId_攻击距离!"
+Set /a "我方EntityId_攻击结束Y=!SelectY!+!我方EntityId_攻击距离!"
+Set /a "我方EntityId_伤害=!EntityInfo_%我方EntityId%_伤害!"
+Set /a "可攻击单位数量=0"
+for /l %%a in (%我方EntityId_攻击起始Y%,1,%我方EntityId_攻击结束Y%) do (
+  for /l %%b in (%我方EntityId_攻击起始X%,1,%我方EntityId_攻击结束X%) do (
+    if defined Player_%%b_%%a (
+      Call :Get_Ver Tmp我方EntityId Player_%%b_%%a
+      Call :Get_Ver Tmp我方EntityId EntityInfo_!Tmp我方EntityId!_阵营
+      if "!Tmp我方EntityId!"=="敌方" (
+        if "!Player_%%b_%%a!"=="!最近的敌方单位Id!" (
+          Set 可攻击单位数量=-1
+          Set 我方可攻击单位_1=!最近的敌方单位Id!
+        ) else if not "!可攻击单位数量!"=="-1" (
+          Set /a 可攻击单位数量+=1
+          Set "我方可攻击单位_!可攻击单位数量!=!Player_%%b_%%a!"
+        )
+        Set /a "DrawAttackSelectX=%%b*64"
+        Set /a "DrawAttackSelectY=%%a*64"
+        Set "image=draw Imgattackrange !DrawAttackSelectX! !DrawAttackSelectY! trans"
+      )
+    )
+  )
+) 2>nul
+if "!可攻击单位数量!"=="-1" (
+  Set /a 可攻击单位数量=1
+)
+Set image=target cmd
+if !可攻击单位数量!==0 (
+  REM 没有可 攻击 单位时做的事
+  if !我方EntityId_移动距离!==0 (
+    Set "回合=我方移动"
+    Set "SelectType=select"
+    Set Ban_!我方EntityId!=true
+    Set "我方EntityId="
+    goto :Main
+  )
+  set "SelectType=select"
+  Set "回合=敌方移动"
+  Set "我方EntityId="
+) else (
+  Set "回合=我方攻击_选择动画"
+  Set /a "被攻击单位EntityId=!Random! %% !可攻击单位数量! + 1"
+  Call :Get_Ver 被攻击单位EntityId 我方可攻击单位_!被攻击单位EntityId!
+)
+Goto :Main
+:我方攻击_选择动画
+Set 被攻击单位X=!EntityInfo_%被攻击单位EntityId%_X!
+Set 被攻击单位Y=!EntityInfo_%被攻击单位EntityId%_Y!
+if Not "!SelectX!"=="!被攻击单位X!" (
+  if !SelectX! gtr !被攻击单位X! (
+    Set /a "SelectX-=1"
+  ) else (
+    Set /a "SelectX+=1"
+  )
+) else (
+  if Not "!SelectY!"=="!被攻击单位Y!" (
+    if !SelectY! gtr !被攻击单位Y! (
+      Set /a "SelectY-=1"
+    ) else (
+      Set /a "SelectY+=1"
+    )
+  )
+)
+if "!SelectX!"=="!被攻击单位X!" (
+  if "!SelectY!"=="!被攻击单位Y!" (
+    Set "回合=我方攻击_造成伤害"
+  )
+)
+Goto :Main
+:我方攻击_造成伤害
+Set "我方EntityId=!Player_%SelectX%_%SelectY%!"
+if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="4" (
+  Set /a 被攻击方防御=!EntityInfo_%被攻击单位EntityId%_防御!+1
+) else if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="13" (
+  Set /a 被攻击方防御=!EntityInfo_%被攻击单位EntityId%_防御!+1
+) else if "!MapList_%被攻击单位X%_%被攻击单位Y%!"=="16" (
+  set 是否闪避=!random!%%4
+  if !是否闪避!==0 (
+    set "SelectType=select"
+    Set "回合=敌方移动"
+    Set "我方EntityId="
+    Goto :Main
+  )
+) else (
+  Set /a 被攻击方防御=!EntityInfo_%被攻击单位EntityId%_防御!
+)
+Set EntityId_伤害=!EntityInfo_%我方EntityId%_伤害!
+Set /a "EntityInfo_!被攻击单位EntityId!_血量-=!敌方EntityId_伤害!"
+if not !敌方EntityId_伤害! equ 0 (
+  if !被攻击方防御! lss !敌方EntityId_伤害! (
+    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!被攻击方防御!"
+  ) else (
+    Set /a "EntityInfo_!被攻击单位EntityId!_血量+=!敌方EntityId_伤害!-1"
+  )
+)
+Call :玩家死亡判断 !被攻击单位EntityId!
+if Not "!凉了吗!"=="凉了" (
+  Call :血量条重算 !被攻击单位EntityId!
+)
+set "SelectType=select"
+Set "回合=敌方移动"
+Set "我方EntityId="
 Set 绘制爆炸特效=true
 Goto :Main
 :Win
