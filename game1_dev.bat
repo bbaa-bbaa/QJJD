@@ -921,8 +921,8 @@ if !Math_单位现血量! leq 0 (
   Set "Player_!凉了的Player_X!_!凉了的Player_Y!="
   Set Tmp_单位数量=0
   if "!EntityInfo_%EId%_阵营!"=="敌方" (
-    Set 敌方单位_ 1>var/敌方单位_.env
-    for /f "Tokens=1-2 delims==" %%y in (var/敌方单位_.env) do (
+    Set 敌方单位_ 1>var/敌方单位.env
+    for /f "Tokens=1-2 delims==" %%y in (var/敌方单位.env) do (
       if not "%%z"=="!EId!" (
         Set /a Tmp_单位数量+=1
         Set "敌方单位_!Tmp_单位数量!=%%z"
@@ -931,8 +931,8 @@ if !Math_单位现血量! leq 0 (
     Set "敌方单位_!敌方单位数量!="
     Set /a "敌方单位数量=!Tmp_单位数量!"
   ) else (
-    Set 我方单位_ 1>var/我方单位_.env
-    for /f "Tokens=1-2 delims==" %%y in (var/我方单位_.env) do (
+    Set 我方单位_ 1>var/我方单位.env
+    for /f "Tokens=1-2 delims==" %%y in (var/我方单位.env) do (
       if not "%%z"=="!EId!" (
         Set /a Tmp_单位数量+=1
         Set "我方单位_!Tmp_单位数量!=%%z"
@@ -941,8 +941,8 @@ if !Math_单位现血量! leq 0 (
     Set "我方单位_!我方单位数量!="
     Set /a "我方单位数量=!Tmp_单位数量!"
   )
-  Set EntityInfo_%EId%_ 1>var/EntityInfo_%EId%_.env
-  for /f "Tokens=1 delims==" %%z in (var/EntityInfo_%EId%_.env) do (
+  Set EntityInfo_%EId%_ 1>var/EntityInfo_%EId%.env
+  for /f "Tokens=1 delims==" %%z in (var/EntityInfo_%EId%.env) do (
     Set "%%~z="
   )
   Set /a "清除玩家X=(!凉了的Player_X!)*64"
@@ -1097,17 +1097,39 @@ if !现X! lss !原X! (
 Goto :Eof
 :寻找选择最有价值的敌方单位
 Set /a 历史价值=-100000
-Set 敌方单位_ 1>var/敌方单位_.env
-Set 我方单位_ 1>var/我方单位_.env
-for /f "Tokens=2 delims==" %%i in (var/敌方单位_.env) do (
-  for /f "Tokens=2 delims==" %%j in (var/我方单位_.env) do (
+Set 敌方单位_ 1>var/敌方单位.env
+Set 我方单位_ 1>var/我方单位.env
+if defined 单位Index回合数 (
+  if !单位Index回合数!==!回合数! (
+    for /l %%i in (1,1,!单位Index!) do (
+      if not defined Ban_!单位选择数据_%%i_敌方! (
+        if !单位选择数据_%%i_价值! gtr !历史价值! (
+          Set 最近的我方单位Id=!单位选择数据_%%i_我方!
+          Set /a 最近单位X=EntityInfo_!单位选择数据_%%i_我方!_X
+          Set /a 最近单位Y=EntityInfo_!单位选择数据_%%i_我方!_Y
+          set /a 敌方EntityId=!单位选择数据_%%i_敌方!
+          set 历史价值=!单位选择数据_%%i_价值!
+        )
+      )
+    )
+    Goto :eof
+  )
+)
+Set /a 单位Index=0
+Set /a 单位Index回合数=!回合数!
+for /f "Tokens=2 delims==" %%i in (var/敌方单位.env) do (
+  for /f "Tokens=2 delims==" %%j in (var/我方单位.env) do (
     if not defined Ban_%%i (
       Set "距离公式=sqrt((!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)*(!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)+(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!)*(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!))"
       calc "!距离公式!" 1>var/距离.calcresult
       Set /p 距离=<var/距离.calcresult
-      set "价值公式=floor(((20/!距离!)+1/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*10000)" 
+      set "价值公式=floor((((8/!距离!)+4/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*(!EntityInfo_%%i_血量!))*10000)"
       calc "!价值公式!" 1>var/价值.calcresult
       Set /p 价值=<var/价值.calcresult
+      Set /a 单位Index+=1
+      Set 单位选择数据_!单位Index!_我方=%%j
+      Set 单位选择数据_!单位Index!_敌方=%%i
+      Set 单位选择数据_!单位Index!_价值=!价值!
       if !价值! gtr !历史价值! (
         Set 最近的我方单位Id=%%j
         Set 最近单位X=!EntityInfo_%%j_X!
@@ -1122,14 +1144,14 @@ Goto :Eof
 :寻找选择最有价值的我方单位
 Set /a 历史价值=-100000
 Set 需要判断的敌方单位=%1
-Set 我方单位_ 1>var/我方单位_.env
+Set 我方单位_ 1>var/我方单位.env
 for /f %%i in ("!需要判断的敌方单位!") do (
-  for /f "Tokens=2 delims==" %%j in (var/我方单位_.env) do (
+  for /f "Tokens=2 delims==" %%j in (var/我方单位.env) do (
     if not defined Ban_%%i (
       Set "距离公式=sqrt((!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)*(!EntityInfo_%%i_X!-!EntityInfo_%%j_X!)+(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!)*(!EntityInfo_%%i_Y!-!EntityInfo_%%j_Y!))"
       calc "!距离公式!" 1>var/距离.calcresult
       Set /p 距离=<var/距离.calcresult
-      set "价值公式=floor(((20/!距离!)+1/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*10000)" 
+      set "价值公式=floor((((8/!距离!)+4/(!EntityInfo_%%j_血量!/(!EntityInfo_%%i_伤害!-!EntityInfo_%%j_防御!)))*(!EntityInfo_%%i_血量!))*10000)"
       calc "!价值公式!" 1>var/价值.calcresult
       Set /p 价值=<var/价值.calcresult
       if !价值! gtr !历史价值! (
@@ -1184,14 +1206,14 @@ if "!敌方选择完毕!"=="t" (
   Set /a "溜走血量=!EntityInfo_%敌方EntityId%_总血量!/3+1"
   if !EntityInfo_%敌方EntityId%_血量! leq !溜走血量! (
     if !敌方单位数量! geq 2 (
-      if not !PostiveAI!=="Enable" (
+      if not "!PostiveAI!"=="Enable" (
         Set TempXY=
         Set TempX=
         Set TempY=
         Set 离得最近的XY积=100000
         Set 是否替换=
-        Set 敌方单位_ 1>var/敌方单位_.env
-        for /f "Tokens=1-2 delims==" %%i in (var/敌方单位_.env) do (
+        Set 敌方单位_ 1>var/敌方单位.env
+        for /f "Tokens=1-2 delims==" %%i in (var/敌方单位.env) do (
           if not %%j==!敌方EntityId! (
             Set /a "TempX=!EntityInfo_%%j_X!-!敌方单位X!"
             Set /a "TempY=!EntityInfo_%%j_Y!-!敌方单位Y!"
@@ -1481,6 +1503,10 @@ if defined 自定义分辨率 (
 for /f "tokens=1 delims==" %%i in (var/BFS.env) do (
   Set "%%~i="
 )
+if !敌方EntityId_移动距离!==0 (
+  Set "回合=敌方移动选定"
+  Goto :Main
+)
 Rem 初始化方向顺序
 Set "BFSMoveX=+0-1+0+1" || REM 上左下右
 Set "BFSMoveY=-1+0+1+0"
@@ -1721,6 +1747,13 @@ if "!可攻击单位数量!"=="-1" (
 Set image=target cmd
 if !可攻击单位数量!==0 (
   REM 没有可 攻击 单位时做的事
+  if !敌方EntityId_移动距离!==0 (
+    Set "回合=敌方移动"
+    Set "SelectType=select"
+    Set Ban_!敌方EntityId!=true
+    Set "敌方EntityId="
+    goto :Main
+  )
   set "SelectType=select"
   Set "回合=单位移动"
   Call :回合结束处理
@@ -1861,8 +1894,8 @@ Set Ban_>var/Ban.env
 for /f "Tokens=1 delims==" %%i in (var/Ban.env) do (
   Set "%%i="
 )
-Set Player_ 1>var/Player_.env
-for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
+Set Player_ 1>var/Player.env
+for /f "Tokens=2 delims==" %%i in (var/Player.env) do (
   if !EntityInfo_%%i_血量! gtr 0 (
       Call :Get_Ver 方块Id MapList_!EntityInfo_%%i_X!_!EntityInfo_%%i_Y!
       if "!方块Id!"=="11" (
