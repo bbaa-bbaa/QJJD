@@ -38,8 +38,6 @@ Set image=load UI\pvpmode.bmp pvpmode
 Set image=load UI\storymode.bmp storymode
 Set image=load UI\choice.bmp choice
 Set image=load UI\nochoice.bmp nochoice
-Set image=draw title 0 0
-Pause>nul
 :Draw_Menu
 Cls
 Set choice=pvp
@@ -94,7 +92,7 @@ for /f %%i in ('dir /a:d /b 自定关卡') do (
   Set /a CustomIndex+=1
 )
 
-Echo                                                请输入想游玩的关卡:
+Echo                                                请输入想游玩的关卡():
 set /p stagechoose=                                            Stage：
 if "!stagechoose:~0,1!"=="N" (
   if not defined Custom!stagechoose! (
@@ -435,7 +433,7 @@ If "%SelectX%"=="!MoveSource_X!" (
   )
 )  2>nul
 Set "SelectType=select"
-Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
+Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY!
 Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
 Set "EntityInfo_!EntityId!_X=!SelectX!"
 Set "EntityInfo_!EntityId!_Y=!SelectY!"
@@ -566,6 +564,7 @@ for /f "eol=# Tokens=1-10 delims=," %%a in (%玩家文件名%) do (
     Set "EntityInfo_!单位数量!_移动距离=%%h"
     Set "EntityInfo_!单位数量!_伤害=%%i"
     Set "EntityInfo_!单位数量!_防御=%%j"
+    Set "EntityInfo_!单位数量!_镜像=False"
   )
 )
 Goto :eof
@@ -632,7 +631,11 @@ for /f "delims== Tokens=1-2" %%a in (var/Player.env) do (
   Set /a "ShowPlayer_Y=!EntityInfo_%%b_Y!*64"
   Call :加载血量条 %%b
   Set "image=target Player"
-  Set "image=draw Img!EntityInfo_%%b_类型! !ShowPlayer_X! !ShowPlayer_Y! trans"
+  if /i "!EntityInfo_%%b_镜像!"=="True" (
+    Set "image=draw MirrorImg!EntityInfo_%%b_类型! !ShowPlayer_X! !ShowPlayer_Y! trans"
+  ) else (
+    Set "image=draw Img!EntityInfo_%%b_类型! !ShowPlayer_X! !ShowPlayer_Y! trans"
+  )
   if "!敌方单位数量!"=="0" (
     Goto :Win
   )
@@ -684,7 +687,7 @@ if !errorlevel!==1 (
         if "!IsWalk!"=="False" (
           Set /a "SelectY+=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
+          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY!
           Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
           Set "EntityInfo_!EntityId!_X=!SelectX!"
           Set "EntityInfo_!EntityId!_Y=!SelectY!"
@@ -712,7 +715,7 @@ Rem 如果是选择单位模式
         if "!IsWalk!"=="False" (
           Set /a "SelectY-=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
+          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY!
           Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
           Set "EntityInfo_!EntityId!_X=!SelectX!"
           Set "EntityInfo_!EntityId!_Y=!SelectY!"
@@ -739,7 +742,7 @@ if  !errorlevel!==3 (
         if "!IsWalk!"=="False" (
           Set /a "SelectX+=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
+          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY!
           Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
           Set "EntityInfo_!EntityId!_X=!SelectX!"
           Set "EntityInfo_!EntityId!_Y=!SelectY!"
@@ -765,7 +768,7 @@ if !errorlevel!==4 (
         if "!IsWalk!"=="False" (
           Set /a "SelectX-=1"
         ) else (
-          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! %EntityId%
+          Call :单位移动 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY!
           Call :移动血量条 !EntityInfo_%EntityId%_X! !EntityInfo_%EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%EntityId%_类型!
           Set "EntityInfo_!EntityId!_X=!SelectX!"
           Set "EntityInfo_!EntityId!_Y=!SelectY!"
@@ -809,6 +812,11 @@ if !errorlevel!==5 (
         Set "回合=敌方移动"
         Set /a "EntityId_伤害=!EntityInfo_%EntityId%_伤害!"
         Set /a "EntityId_X=!EntityInfo_%EntityId%_X!"
+        if !SelectX! lss !EntityId_X! (
+          Set "EntityInfo_%EntityId%_镜像=True"
+        ) else (
+          Set "EntityInfo_%EntityId%_镜像=False"
+        )
         Set "EntityId=!Player_%SelectX%_%SelectY%!"
         Call :Get_Ver 被攻击方防御 EntityInfo_!EntityId!_防御
         Set "被攻击方X=%SelectX%"
@@ -1040,7 +1048,6 @@ set "image=target BufHealth"
 set "image=draw SpaceHealth !原X! !原Y!"
 set "image=draw TmpHealth !现X! !现Y!"
 Goto :Eof
-goto :Eof
 :血量条重算
 Title 血量条重算 Eid:%~1
 Rem Call :ThisFunction <EntityId>
@@ -1073,27 +1080,20 @@ Set /a 血量条Y+=1
 Set "image=draw Health !血量条X! !血量条Y!"
 Goto :Eof
 :单位移动
-Rem Call :ThisFunction <x1> <y1> <x2> <y2> <EntityId>
-Set /a "原X=%1*64"
-Set /a "原Y=%2*64"
-Set /a "现X=%3*64"
+Rem Call :ThisFunction <x1> <y1> <x2> <y2>
+Set /a "原X=(%1)*-64"
+Set /a "原Y=%2*-64"
+Set /a "现X=(%3)*64"
 Set /a "现Y=%4*64"
-Set "IfEntityId=%~5"
+Set "image=buffer TmpPlayer"
+Set "image=stretch TmpPlayer 64 64"
+set "image=target TmpPlayer"
+set "image=draw Player !原X! !原Y!"
 set "image=target Player"
+Set /a 原X*=-1
+Set /a 原Y*=-1
 set "image=draw Space !原X! !原Y!"
-if !现X! lss !原X! (
-  Set EntityInfo_%IfEntityId%_镜像=t
-  set "image=draw MirrorImg!EntityInfo_%IfEntityId%_类型! !现X! !现Y!"
-) else if !现X! equ !原X! (
-  if defined EntityInfo_%IfEntityId%_镜像 (
-    set "image=draw MirrorImg!EntityInfo_%IfEntityId%_类型! !现X! !现Y!"
-  ) else (
-    set "image=draw Img!EntityInfo_%IfEntityId%_类型! !现X! !现Y!"
-  )
-) else (
-  Set "EntityInfo_%IfEntityId%_镜像="
-  set "image=draw Img!EntityInfo_%IfEntityId%_类型! !现X! !现Y!"
-)
+set "image=draw TmpPlayer !现X! !现Y!"
 Goto :Eof
 :寻找选择最有价值的敌方单位
 Set /a 历史价值=-100000
@@ -1649,7 +1649,7 @@ if !BlockDis! gtr !敌方EntityId_移动距离! (
 )
 Set /a SelectX=!BFS_MoveTempX!
 Set /a SelectY=!BFS_MoveTempY!
-Call :单位移动 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY! %敌方EntityId%
+Call :单位移动 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY!
 Call :移动血量条 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%敌方EntityId%_类型!
 Set "EntityInfo_%敌方EntityId%_X=!SelectX!"
 Set "EntityInfo_%敌方EntityId%_Y=!SelectY!"
@@ -1666,7 +1666,7 @@ if not Defined BFS_StackPath_Y (
 Goto :Main
 :敌方移动选定
 Set "SelectType=select"
-Call :单位移动 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY! %敌方EntityId%
+Call :单位移动 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY!
 Call :移动血量条 !EntityInfo_%敌方EntityId%_X! !EntityInfo_%敌方EntityId%_Y! !SelectX! !SelectY! !EntityInfo_%敌方EntityId%_类型!
 Set "EntityInfo_!敌方EntityId!_X=!SelectX!"
 Set "EntityInfo_!敌方EntityId!_Y=!SelectY!"
@@ -1868,14 +1868,13 @@ for /f "Tokens=2 delims==" %%i in (var/Player_.env) do (
       if "!方块Id!"=="11" (
         if !EntityInfo_%%i_血量! lss !EntityInfo_%%i_总血量! (
          Set /a EntityInfo_%%i_血量+=1
-         Call :血量条重算 %%i
         )
       )
       if "!方块Id!"=="15" (
         Set /a EntityInfo_%%i_血量-=1
         Call :玩家死亡判断 %%i
-        Call :血量条重算 %%i
       )
+      Call :血量条重算 %%i
   ) else (
     Call :玩家死亡判断 %%i
     Call :血量条重算 %%i
