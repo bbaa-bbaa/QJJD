@@ -371,8 +371,10 @@ if defined Player_%SelectX%_%SelectY% (
 )
 if defined SPlayer_Id (
   Set "单位信息=名称:!EntityInfo_%SPlayer_Id%_名称! 血量:!EntityInfo_%SPlayer_Id%_血量! 阵营:!EntityInfo_%SPlayer_Id%_阵营!"
+  Set "单位信息2=攻击距离:!EntityInfo_%SPlayer_Id%_攻击距离! 防御:!EntityInfo_%SPlayer_Id%_防御! 攻击力:? 移动距离:!EntityInfo_%SPlayer_Id%_移动距离!"
 ) else (
   Set "单位信息=此处无单位"
+  Set "单位信息2=此处无单位"
 )
 echo;地形:%地形% 属性:%属性% %单位信息%
 echo;当前坐标:x:%SelectX% y:%SelectY%
@@ -799,6 +801,7 @@ if !errorlevel!==5 (
     )
   ) else (
     if "!回合!"=="单位移动" (
+      color 01
       Call :IsWalk
       if "!IsWalk!"=="True" (
         Goto :Main_MoveA
@@ -810,6 +813,7 @@ if !errorlevel!==5 (
       if "!EntityInfo_%SPlayer_Id%_阵营!"=="敌方" (
         Set "SelectType=select"
         Set "回合=敌方移动"
+        color 03
         Set /a "EntityId_伤害=!EntityInfo_%EntityId%_伤害!"
         Set /a "EntityId_X=!EntityInfo_%EntityId%_X!"
         if !SelectX! lss !EntityId_X! (
@@ -1797,7 +1801,7 @@ set image=target cmd
 set image=cls
 cls
 if Not "!自定关卡!"=="True" (
-  if not %map%==5 (
+  if not %map%==8 (
     Echo 你赢了，任意键进入下一关
     echo 回合数:!回合数!
     pause>nul
